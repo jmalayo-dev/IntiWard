@@ -1,0 +1,24 @@
+{
+  "info": {
+    "name": "IntiGuard · Smoke (gateway)",
+    "description": "Verificación rápida de que el gateway enruta a los 5 servicios. Cada integrante crea su propia colección: postman/<servicio>.postman_collection.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+      ] }
+    }
+  ],
+  "item": [
+    { "name": "Gateway health",       "request": { "method": "GET", "url": "{{baseUrl}}/actuator/health" } },
+    { "name": "ms-auth · usuarios",   "request": { "method": "GET", "url": "{{baseUrl}}/usuarios" } },
+    { "name": "ms-catalogo · productos", "request": { "method": "GET", "url": "{{baseUrl}}/productos" } },
+    { "name": "ms-catalogo · producto 1", "request": { "method": "GET", "url": "{{baseUrl}}/productos/1" } },
+    { "name": "ms-inventario · stock producto 1", "request": { "method": "GET", "url": "{{baseUrl}}/stock/1" } },
+    { "name": "ms-pedidos · pedidos", "request": { "method": "GET", "url": "{{baseUrl}}/pedidos" } },
+    { "name": "ms-comprobantes · comprobantes", "request": { "method": "GET", "url": "{{baseUrl}}/comprobantes" } }
+  ]
+}

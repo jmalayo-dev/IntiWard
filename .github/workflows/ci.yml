@@ -1,0 +1,26 @@
+# Compila y prueba los 9 módulos en cada PR hacia develop o main. Dueño: integrante 1
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio: [ms-discovery, ms-gateway, ms-auth, ms-catalogo, ms-inventario,
+                   ms-pedidos, ms-comprobantes, web-client]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilar y probar ${{ matrix.servicio }}
+        run: ./mvnw -B -pl ${{ matrix.servicio }} -am verify

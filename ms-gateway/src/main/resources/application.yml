@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Enrutamiento por prefijo. "lb://" significa: pedirle a Eureka dónde está el servicio
+          routes:
+            - id: ms-auth
+              uri: lb://ms-auth
+              predicates:
+                - Path=/auth/**,/usuarios/**
+            - id: ms-catalogo
+              uri: lb://ms-catalogo
+              predicates:
+                - Path=/productos/**,/marcas/**,/categorias/**
+            - id: ms-inventario
+              uri: lb://ms-inventario
+              predicates:
+                - Path=/stock/**,/movimientos/**
+            - id: ms-pedidos
+              uri: lb://ms-pedidos
+              predicates:
+                - Path=/carrito/**,/pedidos/**
+            - id: ms-comprobantes
+              uri: lb://ms-comprobantes
+              predicates:
+                - Path=/comprobantes/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

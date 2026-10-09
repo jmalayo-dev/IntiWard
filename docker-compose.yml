@@ -1,0 +1,139 @@
+# IntiGuard v2 · Levanta MySQL + los 8 servicios con un comando:  docker compose up -d --build
+# Dueño: integrante 1. Orden de arranque: mysql → discovery → auth/catálogo/inventario/comprobantes → pedidos → gateway → web
+name: intiguard
+
+x-java: &java
+  restart: unless-stopped
+  environment: &java-env
+    JAVA_OPTS: "-Xms128m -Xmx256m"
+    EUREKA_HOST: ms-discovery
+    JWT_SECRET: ${JWT_SECRET:-clave-local-solo-para-desarrollo-no-usar-en-nube}
+
+x-db-service: &db-service
+  <<: *java
+  depends_on:
+    mysql:
+      condition: service_healthy
+    ms-discovery:
+      condition: service_healthy
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: intiguard-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_local}
+    ports:
+      - "3307:3306"   # 3307 en el host para no chocar con un MySQL local en 3306
+    volumes:
+      - ./infra/mysql:/docker-entrypoint-initdb.d:ro
+      - mysql-data:/var/lib/mysql
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root_local}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  ms-discovery:
+    <<: *java
+    build: { context: ., dockerfile: ms-discovery/Dockerfile }
+    image: intiguard/ms-discovery:local
+    ports: ["8761:8761"]
+    environment:
+      <<: *java-env
+
+  ms-auth:
+    <<: *db-service
+    build: { context: ., dockerfile: ms-auth/Dockerfile }
+    image: intiguard/ms-auth:local
+    ports: ["8081:8081"]
+    environment:
+      <<: *java-env
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: db_auth
+      DB_USER: usr_auth
+      DB_PASSWORD: usr_auth_local
+
+  ms-catalogo:
+    <<: *db-service
+    build: { context: ., dockerfile: ms-catalogo/Dockerfile }
+    image: intiguard/ms-catalogo:local
+    ports: ["8082:8082"]
+    environment:
+      <<: *java-env
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: db_catalogo
+      DB_USER: usr_catalogo
+      DB_PASSWORD: usr_catalogo_local
+
+  ms-inventario:
+    <<: *db-service
+    build: { context: ., dockerfile: ms-inventario/Dockerfile }
+    image: intiguard/ms-inventario:local
+    ports: ["8083:8083"]
+    environment:
+      <<: *java-env
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: db_inventario
+      DB_USER: usr_inventario
+      DB_PASSWORD: usr_inventario_local
+
+  ms-comprobantes:
+    <<: *db-service
+    build: { context: ., dockerfile: ms-comprobantes/Dockerfile }
+    image: intiguard/ms-comprobantes:local
+    ports: ["8085:8085"]
+    environment:
+      <<: *java-env
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: db_comprobantes
+      DB_USER: usr_comprobantes
+      DB_PASSWORD: usr_comprobantes_local
+
+  ms-pedidos:
+    <<: *java
+    build: { context: ., dockerfile: ms-pedidos/Dockerfile }
+    image: intiguard/ms-pedidos:local
+    ports: ["8084:8084"]
+    depends_on:
+      mysql: { condition: service_healthy }
+      ms-discovery: { condition: service_healthy }
+      ms-catalogo: { condition: service_healthy }
+      ms-inventario: { condition: service_healthy }
+      ms-comprobantes: { condition: service_healthy }
+    environment:
+      <<: *java-env
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: db_pedidos
+      DB_USER: usr_pedidos
+      DB_PASSWORD: usr_pedidos_local
+
+  ms-gateway:
+    <<: *java
+    build: { context: ., dockerfile: ms-gateway/Dockerfile }
+    image: intiguard/ms-gateway:local
+    ports: ["8080:8080"]
+    depends_on:
+      ms-auth: { condition: service_healthy }
+      ms-pedidos: { condition: service_healthy }
+
+  web-client:
+    <<: *java
+    build: { context: ., dockerfile: web-client/Dockerfile }
+    image: intiguard/web-client:local
+    ports: ["8090:8090"]
+    depends_on:
+      ms-gateway: { condition: service_healthy }
+    environment:
+      <<: *java-env
+      GATEWAY_URL: http://ms-gateway:8080
+
+volumes:
+  mysql-data:

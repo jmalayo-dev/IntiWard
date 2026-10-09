@@ -1,0 +1,25 @@
+# Build
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.DS_Store
+
+# Secretos: nunca al repo
+*.env
+.env*
+!.env.example
+application-*-local.yml
+application-*-local.properties
+
+# Logs
+*.log
+logs/

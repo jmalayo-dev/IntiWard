@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:replace="~{fragments/layout :: head('Inicio')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container py-4">
+    <h1 class="h3 mb-4">Catálogo</h1>
+    <div th:if="${#lists.isEmpty(productos)}" class="alert alert-warning">
+        No hay productos para mostrar o el catálogo no está disponible.
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-sm-6 col-lg-4" th:each="p : ${productos}">
+            <div class="card h-100">
+                <div class="card-body">
+                    <span class="badge text-bg-secondary" th:text="${p.categoria}">Cámaras</span>
+                    <h2 class="h5 mt-2" th:text="${p.nombre}">Producto</h2>
+                    <p class="text-muted small mb-1" th:text="${p.marca}">Marca</p>
+                    <p class="fw-bold mb-0" th:text="'S/ ' + ${#numbers.formatDecimal(p.precio, 1, 2)}">S/ 0.00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

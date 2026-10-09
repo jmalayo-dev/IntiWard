@@ -1,0 +1,4 @@
+/* Estilos propios de IntiGuard. Bootstrap hace el resto. */
+.navbar-brand { letter-spacing: .5px; }
+.card { transition: box-shadow .15s; }
+.card:hover { box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .1); }

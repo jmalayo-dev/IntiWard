@@ -1,0 +1,23 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: ms-discovery
+
+eureka:
+  instance:
+    hostname: ${EUREKA_HOST:localhost}
+  client:
+    # El servidor no se registra a sí mismo
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    # En desarrollo los servicios se reinician seguido: sin esto Eureka guarda instancias muertas
+    enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

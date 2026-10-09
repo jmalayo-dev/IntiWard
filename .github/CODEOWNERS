@@ -1,0 +1,24 @@
+# GitHub pide automáticamente la revisión del dueño de cada carpeta.
+# PENDIENTE: reemplazar @integrante2..@integrante5 por los usuarios reales de GitHub
+# y descomentar las líneas. Mientras tanto, todo lo revisa el integrante 1.
+*                     @jmalayo-dev
+
+/ms-gateway/          @jmalayo-dev
+/ms-discovery/        @jmalayo-dev
+/pom.xml              @jmalayo-dev
+/docker-compose.yml   @jmalayo-dev
+/.github/             @jmalayo-dev
+/infra/               @jmalayo-dev
+/web-client/          @jmalayo-dev
+
+# /common-security/          @integrante2
+# /ms-auth/                  @integrante2
+# /infra/mysql/01-auth.sql   @integrante2
+# /ms-catalogo/              @integrante3
+# /infra/mysql/02-catalogo.sql @integrante3
+# /ms-pedidos/               @integrante4
+# /infra/mysql/04-pedidos.sql @integrante4
+# /ms-inventario/            @integrante5
+# /ms-comprobantes/          @integrante5
+# /infra/mysql/03-inventario.sql @integrante5
+# /infra/mysql/05-comprobantes.sql @integrante5
