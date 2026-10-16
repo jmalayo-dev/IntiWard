@@ -164,7 +164,7 @@ Las rutas internas (`POST /stock/reservar|confirmar|liberar`, `POST /comprobante
 
 | Síntoma | Causa | Solución |
 |---|---|---|
-| `Falta AIVEN_HOST en .env` al usar `docker compose` | No hay `.env` en la raíz o le falta la variable | Pide tu `.env` al integrante 1 y guárdalo en la raíz del repo |
+| Tu servicio no arranca y el log habla de la URL de la base (`jdbc:mysql://:/…`) o de un host vacío | No hay `.env` en la raíz, o se guardó con otro nombre (`.env.txt`, `.env-inventario`) | Pide tu `.env` al integrante 1, guárdalo en la raíz del repo y renómbralo a `.env` exacto |
 | El servicio no arranca: `Access denied for user 'ms_…'` | `DB_PASS_<SERVICIO>` vacía o mal copiada | Revisa el `.env` (sin espacios ni comillas) |
 | `Too many connections` | La base compartida llegó a 46 conexiones | Apaga lo que no uses (`docker compose down`) y avisa por el grupo |
 | `Could not find artifact pe.intiguard:common-security` | No se instaló la librería común | `./mvnw -q install -DskipTests` |

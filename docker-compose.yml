@@ -20,8 +20,8 @@ x-db-service: &db-service
       condition: service_healthy
 
 x-aiven: &aiven
-  AIVEN_HOST: ${AIVEN_HOST:?Falta AIVEN_HOST en .env}
-  AIVEN_PORT: ${AIVEN_PORT:?Falta AIVEN_PORT en .env}
+  AIVEN_HOST: ${AIVEN_HOST:-}
+  AIVEN_PORT: ${AIVEN_PORT:-}
 
 services:
   ms-discovery:
