@@ -1,18 +1,24 @@
-# Configuración por defecto (perfil local). Todo valor sensible entra por variable de entorno;
-# los valores después de ":" son solo para desarrollo contra el MySQL de docker-compose (puerto 3307).
+# Perfil por defecto (desarrollo) contra el MySQL de Aiven. Las credenciales salen de .env:
+# Docker las pasa como variables de entorno y, al correr desde el IDE o con Maven, se lee el .env de la raíz.
 server:
   port: ${PORT:8081}
 
 spring:
   application:
     name: ms-auth
+  config:
+    import: optional:file:.env[.properties],optional:file:../.env[.properties]
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:db_auth}
-    username: ${DB_USER:usr_auth}
-    password: ${DB_PASSWORD:usr_auth_local}
+    url: jdbc:mysql://${DB_HOST:${AIVEN_HOST}}:${DB_PORT:${AIVEN_PORT}}/${DB_NAME:db_auth}?sslMode=REQUIRED
+    username: ${DB_USER:ms_auth}
+    password: ${DB_PASSWORD:${DB_PASS_AUTH}}
+    hikari:
+      # Aiven acepta 46 conexiones en total y la base es compartida por todo el equipo
+      maximum-pool-size: ${DB_POOL_MAX:2}
+      minimum-idle: ${DB_POOL_MIN:1}
   jpa:
     hibernate:
-      # El schema lo crea infra/mysql/*.sql; Hibernate solo valida que coincida
+      # El schema lo crea infra/scripts/init-aiven.sh; Hibernate solo valida que coincida
       ddl-auto: validate
     open-in-view: false
 
@@ -20,6 +26,18 @@ intiguard:
   jwt:
     secret: ${JWT_SECRET:clave-local-solo-para-desarrollo-no-usar-en-nube}
     expiration-minutes: 60
+  security:
+    # false mientras no exista el login (C3): el token se usa si llega, pero no es obligatorio
+    exigir-token: ${EXIGIR_TOKEN:false}
+    rutas-publicas:
+      - POST /auth/login
+      - POST /auth/registro
+  # Administrador inicial: lo crea AdminInicializador si no existe. Sin correo o clave en .env, no lo crea.
+  admin:
+    correo: ${ADMIN_CORREO:}
+    clave: ${ADMIN_CLAVE:}
+    nombres: ${ADMIN_NOMBRES:Administrador}
+    apellidos: ${ADMIN_APELLIDOS:IntiGuard}
 
 eureka:
   client:

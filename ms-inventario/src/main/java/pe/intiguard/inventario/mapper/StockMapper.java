@@ -9,6 +9,6 @@ public final class StockMapper {
     }
 
     public static StockResponse toResponse(Stock s) {
-        return new StockResponse(s.getIdProducto(), s.getCantidad(), s.getCantidadReservada(), s.getDisponible());
+        return new StockResponse(s.getIdProducto(), s.getDisponible(), s.getReservado());
     }
 }

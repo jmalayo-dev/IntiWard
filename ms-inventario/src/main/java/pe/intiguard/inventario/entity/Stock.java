@@ -2,8 +2,14 @@ package pe.intiguard.inventario.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
 
-/** Cantidad disponible por producto. idProducto es el id de ms-catalogo (sin FK: otro schema). */
+import java.time.LocalDateTime;
+
+/**
+ * Stock por producto. La PK es el id de ms-catalogo (sin FK: otro schema).
+ * La BD rechaza valores negativos (CHECK): es la última barrera contra la sobreventa.
+ */
 @Entity
 @Table(name = "stock")
 @Getter
@@ -13,22 +19,22 @@ import lombok.*;
 @AllArgsConstructor
 public class Stock {
 
+    /** Asignado a mano: es el id del producto en ms-catalogo, no un autoincremental. */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, unique = true)
+    @Column(name = "id_producto")
     private Long idProducto;
 
+    /** Unidades que se pueden vender ahora mismo. */
+    @Builder.Default
     @Column(nullable = false)
-    private int cantidad;
+    private int disponible = 0;
 
     /** Unidades apartadas por un checkout en curso que todavía no se confirma. */
     @Builder.Default
     @Column(nullable = false)
-    private int cantidadReservada = 0;
+    private int reservado = 0;
 
-    public int getDisponible() {
-        return cantidad - cantidadReservada;
-    }
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime actualizadoEn;
 }

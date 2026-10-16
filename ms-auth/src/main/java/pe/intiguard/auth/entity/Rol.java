@@ -14,9 +14,10 @@ public class Rol {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "id_rol")
+    private Long id;
 
     /** ADMIN o CLIENTE */
-    @Column(nullable = false, unique = true, length = 30)
+    @Column(nullable = false, unique = true, length = 20)
     private String nombre;
 }

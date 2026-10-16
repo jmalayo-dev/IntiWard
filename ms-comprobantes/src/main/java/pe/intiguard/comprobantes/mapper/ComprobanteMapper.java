@@ -9,6 +9,7 @@ public final class ComprobanteMapper {
     }
 
     public static ComprobanteResponse toResponse(Comprobante c) {
-        return new ComprobanteResponse(c.getId(), c.getIdVenta(), c.getTipo().name(), c.getNumero(), c.getTotal(), c.getFechaEmision());
+        return new ComprobanteResponse(c.getId(), c.getIdVenta(), c.getTipo().name(), c.getNumero(), c.getDocCliente(),
+                c.getNombreRazonSocial(), c.getSubtotal(), c.getIgv(), c.getTotal(), c.getPdfUrl(), c.getEmitidoEn());
     }
 }

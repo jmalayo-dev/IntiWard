@@ -17,7 +17,7 @@ public class StockService {
     private final StockRepository stockRepository;
 
     public StockResponse obtener(Long idProducto) {
-        return stockRepository.findByIdProducto(idProducto)
+        return stockRepository.findById(idProducto)
                 .map(StockMapper::toResponse)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No hay stock registrado para el producto " + idProducto));
     }

@@ -2,10 +2,14 @@ package pe.intiguard.inventario.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-/** Historial auditable: es lo que hace medible el Objetivo 2 del informe. */
+/**
+ * Historial auditable: es lo que hace medible el Objetivo 2 del informe.
+ * Cantidad siempre positiva salvo en AJUSTE; el tipo define el efecto (ver 03-inventario.sql).
+ */
 @Entity
 @Table(name = "movimiento_stock")
 @Getter
@@ -17,6 +21,7 @@ public class MovimientoStock {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_movimiento")
     private Long id;
 
     @Column(nullable = false)
@@ -29,11 +34,14 @@ public class MovimientoStock {
     @Column(nullable = false)
     private int cantidad;
 
-    /** Por ejemplo el id de la venta que generó el movimiento. */
-    @Column(length = 60)
-    private String referencia;
+    /** Venta que generó el movimiento. Obligatorio salvo en ENTRADA y AJUSTE. */
+    private Long idVenta;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private LocalDateTime fecha = LocalDateTime.now();
+    /** Obligatorio en AJUSTE. */
+    @Column(length = 200)
+    private String motivo;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime creadoEn;
 }

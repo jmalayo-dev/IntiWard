@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface VentaRepository extends JpaRepository<Venta, Long> {
 
-    List<Venta> findByIdUsuarioOrderByFechaDesc(Long idUsuario);
+    List<Venta> findByIdUsuarioOrderByFechaVentaDesc(Long idUsuario);
 }
