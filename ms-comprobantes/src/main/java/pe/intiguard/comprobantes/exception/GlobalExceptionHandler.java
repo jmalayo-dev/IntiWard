@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,6 +29,17 @@ public class GlobalExceptionHandler {
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .toList();
         return construir(HttpStatus.BAD_REQUEST, "Datos inválidos", req, detalles);
+    }
+
+    // Sin estos dos, el handler de Exception convertiría un acceso denegado en un 500
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> noAutenticado(AuthenticationException ex, HttpServletRequest req) {
+        return construir(HttpStatus.UNAUTHORIZED, "Se requiere iniciar sesión", req, List.of());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> sinPermiso(AccessDeniedException ex, HttpServletRequest req) {
+        return construir(HttpStatus.FORBIDDEN, "No tiene permiso para esta operación", req, List.of());
     }
 
     @ExceptionHandler(Exception.class)
