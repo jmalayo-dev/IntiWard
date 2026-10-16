@@ -8,15 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-/**
- * Registra cada petición que entra al gateway.
- *
- * PENDIENTE (integrante 1, semana 3): crear JwtGatewayFilter al lado de este:
- *  - Rutas públicas: /auth/**, GET /productos/**, /actuator/health.
- *  - En el resto, validar "Authorization: Bearer ..." con la misma clave JWT_SECRET
- *    y responder 401 si falla.
- *  - Propagar el usuario y el rol a los servicios en las cabeceras X-User y X-Rol.
- */
+/** Registra cada petición que entra al gateway. Corre antes que JwtGatewayFilter. */
 @Slf4j
 @Component
 public class RequestLogFilter implements GlobalFilter, Ordered {

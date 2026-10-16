@@ -13,10 +13,12 @@ target/
 .settings/
 .DS_Store
 
+infra/
+postman
+
 # Secretos: nunca al repo
 *.env
 .env*
-!.env.example
 application-*-local.yml
 application-*-local.properties
 

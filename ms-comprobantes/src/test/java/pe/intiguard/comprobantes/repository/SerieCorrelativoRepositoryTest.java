@@ -15,11 +15,14 @@ class SerieCorrelativoRepositoryTest {
     private SerieCorrelativoRepository serieRepository;
 
     @Test
-    void encuentraLaSeriePorTipoDeComprobante() {
-        serieRepository.save(SerieCorrelativo.builder().tipo(TipoComprobante.BOLETA).serie("B001").ultimoCorrelativo(0).build());
+    void bloqueaLaSerieDelTipoYAvanzaElCorrelativo() {
+        serieRepository.save(SerieCorrelativo.builder().serie("B001").tipo(TipoComprobante.BOLETA).build());
+        serieRepository.save(SerieCorrelativo.builder().serie("F001").tipo(TipoComprobante.FACTURA).build());
 
-        assertThat(serieRepository.findByTipo(TipoComprobante.BOLETA))
-                .isPresent()
-                .get().extracting(SerieCorrelativo::getSerie).isEqualTo("B001");
+        SerieCorrelativo boleta = serieRepository.findFirstByTipoOrderBySerieAsc(TipoComprobante.BOLETA).orElseThrow();
+
+        assertThat(boleta.getSerie()).isEqualTo("B001");
+        assertThat(boleta.siguiente()).isEqualTo(1);
+        assertThat(boleta.siguiente()).isEqualTo(2);
     }
 }

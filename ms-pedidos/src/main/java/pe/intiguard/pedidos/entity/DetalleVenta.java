@@ -16,6 +16,7 @@ public class DetalleVenta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_detalle_venta")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -25,16 +26,18 @@ public class DetalleVenta {
     @Column(nullable = false)
     private Long idProducto;
 
-    /** Se copia el nombre al momento de la venta: si el catálogo cambia, el pedido no. */
-    @Column(nullable = false, length = 150)
+    /** Se copian nombre y precio al momento de la venta: si el catálogo cambia, el pedido no. */
+    @Column(nullable = false, length = 120)
     private String nombreProducto;
-
-    @Column(nullable = false)
-    private int cantidad;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal precioUnitario;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal subtotal;
+    @Column(nullable = false)
+    private int cantidad;
+
+    /** No se guarda: se calcula. */
+    public BigDecimal getImporte() {
+        return precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+    }
 }

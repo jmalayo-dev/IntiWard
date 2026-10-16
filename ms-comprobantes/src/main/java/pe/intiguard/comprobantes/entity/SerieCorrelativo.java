@@ -3,7 +3,11 @@ package pe.intiguard.comprobantes.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-/** Última numeración usada por serie: B001 para boletas, F001 para facturas. */
+/**
+ * Última numeración usada por serie (B001 boletas, F001 facturas).
+ * Para que dos emisiones simultáneas no tomen el mismo número, la fila se lee
+ * con bloqueo pesimista (SELECT ... FOR UPDATE): ver SerieCorrelativoRepository.findFirstByTipoOrderBySerieAsc.
+ */
 @Entity
 @Table(name = "serie_correlativo")
 @Getter
@@ -13,21 +17,21 @@ import lombok.*;
 @AllArgsConstructor
 public class SerieCorrelativo {
 
+    /** B001, F001: la serie es la PK (la BD valida que B vaya con BOLETA y F con FACTURA). */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true, length = 20)
-    private TipoComprobante tipo;
-
-    @Column(nullable = false, length = 4)
+    @Column(length = 4)
     private String serie;
 
-    @Column(nullable = false)
-    private long ultimoCorrelativo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TipoComprobante tipo;
 
-    /** Evita que dos emisiones simultáneas tomen el mismo número. */
-    @Version
-    private Long version;
+    @Builder.Default
+    @Column(nullable = false)
+    private int ultimoCorrelativo = 0;
+
+    /** Avanza el correlativo y devuelve el nuevo. Llamar solo con la fila bloqueada. */
+    public int siguiente() {
+        return ++ultimoCorrelativo;
+    }
 }

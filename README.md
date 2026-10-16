@@ -4,6 +4,8 @@ E-commerce de equipos de seguridad electrónica (cámaras, alarmas, sensores de 
 
 Proyecto del curso **Desarrollo de Servicios Web II · Cibertec**. El plan completo (decisiones, cronograma y despliegue) está en [`docs/Plan de ejecución — IntiGuard v2.md`](docs/Plan%20de%20ejecución%20—%20IntiGuard%20v2.md).
 
+> **¿Recién llegas al equipo?** Empieza por [`ARRANQUE_PROYECTO.md`](ARRANQUE_PROYECTO.md): cómo levantar tu servicio el primer día y qué le debe cada integrante a quién.
+
 ## Arquitectura
 
 ```
@@ -42,7 +44,7 @@ Proyecto del curso **Desarrollo de Servicios Web II · Cibertec**. El plan compl
 
 ## Stack
 
-Java 21 · Spring Boot 3.5.16 · Spring Cloud 2025.0.3 (Gateway, Eureka, OpenFeign, Resilience4j) · Spring Data JPA · Spring Security + JWT (jjwt 0.12) · Lombok · MySQL 8.4 · JUnit 5 + Mockito + H2 · Thymeleaf + Bootstrap 5 · Docker Compose · Maven Wrapper 3.9.16
+Java 21 · Spring Boot 3.5.16 · Spring Cloud 2025.0.3 (Gateway, Eureka, OpenFeign, Resilience4j) · Spring Data JPA · Spring Security + JWT (jjwt 0.12) · Lombok · MySQL 8.4 · JUnit 5 + Mockito + H2 · Thymeleaf + Bootstrap 5 · Docker Compose · MySQL administrado en Aiven · Maven Wrapper 3.9.16
 
 ## Requisitos para desarrollar
 
@@ -56,21 +58,23 @@ Java 21 · Spring Boot 3.5.16 · Spring Cloud 2025.0.3 (Gateway, Eureka, OpenFei
 
 > Si tienes otro JDK por defecto (por ejemplo 25), exporta antes `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`.
 > RAM: el sistema completo usa ~3–4 GB (cada JVM limitada a 256 MB).
-> El MySQL de Docker se publica en el puerto **3307** del host para no chocar con un MySQL local en 3306.
+> **No hay MySQL local.** La base es un MySQL 8.4 en **Aiven**, compartido por todo el equipo. Hace falta internet y un archivo `.env` (ver abajo).
 
 ## Levantar todo
 
 ```bash
 git clone git@github.com:jmalayo-dev/IntiWard.git && cd IntiWard
 
-# 1. Compilar y correr las pruebas de los 9 módulos
+# 1. Credenciales: guardar en la raíz del repo el archivo .env que te pasa el integrante 1 por privado
+
+# 2. Compilar y correr las pruebas (usan H2 en memoria: no necesitan Aiven ni .env)
 ./mvnw verify
 
-# 2. Levantar MySQL + 8 servicios (la primera vez tarda ~3 min en construir las imágenes)
+# 3. Levantar los 8 servicios contra Aiven (la primera vez tarda ~3 min en construir las imágenes)
 docker compose up -d --build
 docker compose ps                      # todos deben quedar "healthy"
 
-# 3. Verificar
+# 4. Verificar
 open http://localhost:8761             # panel de Eureka
 curl localhost:8080/productos          # catálogo a través del gateway
 open http://localhost:8090             # cliente web
@@ -78,25 +82,47 @@ open http://localhost:8090             # cliente web
 
 > Justo después de levantar, el gateway puede responder **503** unos 30 s, hasta que recibe la lista de Eureka.
 
-**Trabajar en un solo servicio** (lo normal día a día): levanta las dependencias en Docker y corre tu servicio desde el IDE o con Maven. Por defecto apunta a `localhost:3307` y a Eureka en `localhost:8761`.
+### Trabajar solo en tu servicio (lo normal día a día)
+
+Aiven acepta **46 conexiones en total** para todo el equipo, y cada servicio abre de 1 a 2. **Levanta solo lo que usas**: Docker Compose arranca únicamente los servicios que nombras, más Eureka.
+
+| Integrante | Comando | Variables que necesita en `.env` |
+|---|---|---|
+| 2 · auth | `docker compose up -d ms-auth` | `DB_PASS_AUTH` (+ `ADMIN_CORREO`, `ADMIN_CLAVE` para crear el admin) |
+| 3 · catálogo | `docker compose up -d ms-catalogo` | `DB_PASS_CATALOGO` |
+| 4 · pedidos | `docker compose up -d ms-pedidos` (carrito)<br>`docker compose up -d ms-pedidos ms-catalogo ms-inventario ms-comprobantes` (checkout) | `DB_PASS_PEDIDOS` (+ las de los otros tres para el checkout) |
+| 5 · inventario y comprobantes | `docker compose up -d ms-inventario ms-comprobantes` | `DB_PASS_INVENTARIO`, `DB_PASS_COMPROBANTES` |
+| 1 · integración y demo | `docker compose up -d` (todo, con gateway y web-client) | Todas |
+
+Además de `AIVEN_HOST` y `AIVEN_PORT`, que todos necesitan. Cada uno recibe **solo las contraseñas de los servicios que levanta** (por un canal privado, nunca por Git ni por el grupo).
+
+Para correr tu servicio desde el IDE o con Maven (más rápido para depurar), levanta solo Eureka en Docker. El servicio lee el `.env` de la raíz:
 
 ```bash
-docker compose up -d mysql ms-discovery ms-gateway
+docker compose up -d ms-discovery
 docker compose stop ms-catalogo                  # si estaba corriendo en Docker
+./mvnw -q install -DskipTests                    # una vez, y cada vez que cambie common-security
 ./mvnw -pl ms-catalogo spring-boot:run
 ```
 
-**Reiniciar la base** (después de cambiar algo en `infra/mysql/*.sql`): `docker compose down -v && docker compose up -d`
+Prueba tu servicio directo por su puerto (`curl localhost:8082/productos`); el gateway solo hace falta para el web-client o para probar las rutas completas. Al terminar: `docker compose down`.
 
-**Credenciales de desarrollo**: usuario `admin@intiguard.pe` / `Admin12345`. MySQL root: `root_local`. Cada servicio tiene su usuario: `usr_<servicio>` / `usr_<servicio>_local`.
+### Base de datos en Aiven
+
+- **Crear la base desde cero** (solo el integrante 1, una vez): `./infra/scripts/init-aiven.sh`. Ejecuta `infra/mysql/*.sql` y `infra/mysql/inserts-test/*.sql`, y fija las contraseñas reales de los usuarios `ms_*`. Si la base ya existe, no toca nada.
+- **Cambiar una tabla:** la base es compartida y no se puede borrar y recrear. Se actualiza el `.sql` del servicio en el PR, y el integrante 1 aplica el `ALTER TABLE` equivalente en Aiven al mergear.
+- **Usuarios MySQL:** cada servicio entra con `ms_<servicio>` y su `DB_PASS_*`, y solo puede tocar su schema. `avnadmin` (`AIVEN_ADMIN_*`) es solo para `init-aiven.sh` y para administrar.
+- **Administrador de la tienda:** no está en el SQL. ms-auth lo crea al arrancar si `ADMIN_CORREO` y `ADMIN_CLAVE` están en el `.env`; si faltan, avisa en el log y no lo crea.
 
 ## Estructura del repositorio
 
 ```
 ├─ pom.xml                 POM padre (versiones en un solo lugar)          ← integrante 1
-├─ docker-compose.yml      MySQL + 8 servicios con healthchecks y orden    ← integrante 1
+├─ docker-compose.yml      8 servicios contra MySQL de Aiven               ← integrante 1
 ├─ .github/                CI (matriz de 8 módulos), CODEOWNERS, plantilla de PR
-├─ infra/mysql/            00-schemas-usuarios.sql + un .sql por servicio (tablas y semillas)
+├─ infra/mysql/            00-schemas-usuarios.sql + un .sql por servicio (solo tablas)
+│  └─ inserts-test/        datos iniciales por servicio
+├─ infra/scripts/          init-aiven.sh: crea la base en Aiven a partir de infra/mysql/
 ├─ common-security/        Librería JWT que importan los 5 servicios de negocio
 ├─ ms-*/                   Un servicio por carpeta, cada uno con su README, Dockerfile y tests
 ├─ web-client/             Thymeleaf
@@ -123,10 +149,10 @@ test(auth): pruebas de la capa de datos del repositorio de usuarios
 ```
 
 **Reglas**
-1. Cada integrante trabaja **solo en su carpeta** y en su `infra/mysql/0X-<servicio>.sql`.
+1. Cada integrante trabaja **solo en su carpeta** y en su `infra/mysql/0X-<servicio>.sql` (estructura) y `infra/mysql/inserts-test/0X-<servicio>.sql` (datos).
 2. Los archivos compartidos (`pom.xml` raíz, `docker-compose.yml`, `.github/`, rutas del gateway) los edita **solo el integrante 1**. Si necesitas algo, pídelo por el grupo.
 3. Un PR necesita la aprobación de otro integrante.
-4. **Cero credenciales en el código**: todo entra por variable de entorno (`DB_PASSWORD`, `JWT_SECRET`…). Los valores por defecto de `application.yml` son solo para desarrollo local.
+4. **Cero credenciales en el código**: todo sale del `.env` (que Git ignora) o de variables de entorno. Nunca pegues una contraseña en un archivo versionado, en un issue o en el chat del grupo.
 5. Si cambias un endpoint o DTO que otro servicio consume, avisa al dueño **antes** de mergear.
 
 ## Estado actual (bases · semana 1)
@@ -136,9 +162,9 @@ test(auth): pruebas de la capa de datos del repositorio de usuarios
 | Ya funciona | Detalle |
 |---|---|
 | Infraestructura | Eureka, gateway con rutas a los 5 servicios, Docker Compose con orden de arranque y healthchecks |
-| Base de datos | 5 schemas, 5 usuarios con permisos solo sobre su schema, todas las tablas del modelo y semillas (admin, 5 marcas, 5 categorías, 5 productos con stock, series B001/F001) |
+| Base de datos | MySQL 8.4 en Aiven: 5 schemas, 5 usuarios con permisos solo sobre su schema, todas las tablas del modelo y datos iniciales (roles, 6 marcas, 6 categorías, 8 productos con stock, series B001/F001) |
 | Cada servicio de negocio | Entidades completas del modelo, repositorios, DTO, mapper, service, `GET` de lectura, manejo global de errores, perfiles default/cloud, Dockerfile, test `@DataJpaTest` |
-| Seguridad | `JwtService` (generar/validar, con test), BCrypt(10) en ms-auth. El filtro aún deja pasar todo (`permitAll`) |
+| Seguridad | JWT con `idUsuario` y rol (C1), `JwtAuthFilter` + `UsuarioActual` en los 5 servicios (C2), gateway con rutas públicas, internas bloqueadas y validación del token (C4). **Login (C3)** con las 6 reglas del plan y `/usuarios` solo para ADMIN. `EXIGIR_TOKEN=false` en desarrollo. BCrypt(10) en ms-auth |
 | ms-pedidos | Feign y Resilience4j configurados, `CatalogoClient` de ejemplo |
 | web-client | Layout base + inicio con el catálogo real |
 | GitHub | CI con matriz de 8 módulos, CODEOWNERS, plantilla de PR |
@@ -151,15 +177,15 @@ El detalle (archivos, reglas y checklist por semana) está en el README de cada 
 - [ ] Proteger `main` y `develop` en GitHub (Settings → Branches: exigir PR, CI verde y una aprobación).
 - [ ] Reemplazar `@integranteN` en `.github/CODEOWNERS` cuando se conozcan los usuarios de GitHub.
 - [ ] Crear el tablero de GitHub Projects (Backlog, En curso, En revisión, Hecho) y los milestones por semana.
-- [ ] **S3**: `JwtGatewayFilter` (validar el token, rutas públicas y cabeceras `X-User`/`X-Rol`).
+- [x] **S3**: `JwtGatewayFilter` (C4) y la base de seguridad de `common-security` (C1, C2), adelantados a la semana 2.
 - [ ] **S6**: web-client: sesión con JWT, interceptor `Authorization`, menú por rol.
 - [ ] **S8**: EC2 + RDS + S3, Nginx con HTTPS, secretos en Parameter Store, `docker-compose` de nube, publicar imágenes en Docker Hub desde el CI.
 - [ ] Integración semanal: `develop` → `main` con todo en verde.
 
 ### Integrante 2 (ms-auth + common-security)
 - [ ] **S2**: `POST /auth/registro` y el CRUD de `/usuarios`.
-- [ ] **S3**: `POST /auth/login` con las 6 validaciones (genérico 401, bloqueo 423 tras 5 intentos, cuenta inactiva, JWT de 1 h).
-- [ ] **S3**: `JwtAuthFilter` en `common-security` y pasar de `permitAll` a `authenticated`.
+- [x] **S3**: `POST /auth/login` con las 6 validaciones: lo hizo el integrante 1, con tests.
+- [x] ~~`JwtAuthFilter` en `common-security`~~: lo hizo el integrante 1. Cuando el login funcione, pasar `EXIGIR_TOKEN=true`.
 - [ ] **S6**: pantallas de login, registro, perfil y gestión de usuarios.
 - [ ] **S7**: tests de `AuthService` y colección de Postman que guarde `{{token}}`.
 
@@ -178,7 +204,7 @@ El detalle (archivos, reglas y checklist por semana) está en el README de cada 
 
 ### Integrante 5 (ms-inventario + ms-comprobantes)
 - [ ] **S2–3**: `reservar` / `confirmar` / `liberar` con movimientos (409 si no alcanza).
-- [ ] **S2–3**: `POST /comprobantes` con serie y correlativo (`@Version`, idempotente por venta).
+- [ ] **S2–3**: `POST /comprobantes` con serie y correlativo (`SELECT ... FOR UPDATE`, idempotente por venta).
 - [ ] **S4**: acordar los contratos con el integrante 4.
 - [ ] **S5**: PDF del comprobante (OpenPDF), reporte de ventas y semilla de stock para 200 productos.
 - [ ] **S6–7**: pantallas de stock y comprobantes, tests y colecciones de Postman.

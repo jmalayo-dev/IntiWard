@@ -14,8 +14,13 @@ public class Categoria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "id_categoria")
+    private Long id;
 
     @Column(nullable = false, unique = true, length = 60)
     private String nombre;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean activo = true;
 }

@@ -9,6 +9,7 @@ public final class VentaMapper {
     }
 
     public static VentaResponse toResponse(Venta v) {
-        return new VentaResponse(v.getId(), v.getIdUsuario(), v.getFecha(), v.getTotal(), v.getEstado().name(), v.getIdComprobante());
+        return new VentaResponse(v.getId(), v.getIdUsuario(), v.getFechaVenta(), v.getEstado().name(),
+                v.getTipoComprobante().name(), v.getSubtotal(), v.getIgv(), v.getTotal());
     }
 }
