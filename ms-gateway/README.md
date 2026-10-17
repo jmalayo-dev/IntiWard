@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Responsable** | Integrante 1 · Mathias |
+| **Responsable** | Mathias · rama `b-alayo` |
 | **Puerto** | 8080 (la **única** URL pública del sistema) |
 | **Nombre en Eureka** | `ms-gateway` |
 | **Base de datos** | Ninguna |
@@ -28,7 +28,7 @@ El cliente web y Postman conocen **una sola URL**: la del gateway. El gateway:
 | `/carrito/**`, `/pedidos/**` | `lb://ms-pedidos` |
 | `/comprobantes/**` | `lb://ms-comprobantes` |
 
-> **Regla para el equipo:** si un integrante agrega un recurso con un prefijo nuevo (por ejemplo `/reportes`), tiene que pedirle al integrante 1 que agregue la ruta aquí.
+> **Regla para el equipo:** si un integrante agrega un recurso con un prefijo nuevo (por ejemplo `/reportes`), tiene que pedirle a Mathias que agregue la ruta aquí.
 
 ## Estado actual
 
@@ -38,8 +38,8 @@ El cliente web y Postman conocen **una sola URL**: la del gateway. El gateway:
 | `filter/RequestLogFilter.java`: registra método y ruta de cada petición | ✅ |
 | `filter/JwtGatewayFilter.java`: contrato C4 | ✅ Rutas internas → 403 siempre; rutas públicas sin token; token inválido o vencido → 401; sin token → 401 solo si `EXIGIR_TOKEN=true` |
 | `filter/GatewaySeguridadProperties.java` | ✅ Lee `intiguard.jwt.secret` e `intiguard.security.*` (rutas públicas e internas en `application.yml`) |
-| Tests | ✅ `JwtGatewayFilterTest` (6 casos) |
-| CORS | No hace falta: el web-client llama al gateway desde el servidor, no desde el navegador |
+| Tests | ✅ `JwtGatewayFilterTest` (6 casos; incluye `GET /stock?ids=` público) |
+| CORS | En desarrollo no hace falta: la app React llama a `/api` y el proxy de Vite lo manda al gateway (un solo origen). Para la nube: pendiente (S3) |
 
 El token **sigue viajando** en `Authorization` hasta el servicio, que lo vuelve a validar con `common-security`. No se agregan cabeceras `X-User`/`X-Rol`: cada servicio lee el usuario del token con `UsuarioActual`, y así las llamadas Feign entre servicios (que no pasan por el gateway) también quedan protegidas.
 
@@ -47,11 +47,11 @@ El token **sigue viajando** en `Authorization` hasta el servicio, que lo vuelve 
 
 El mapa completo está en [`ARRANQUE_PROYECTO.md`](../ARRANQUE_PROYECTO.md#quién-le-debe-a-quién).
 
-### Lo que debo (integrante 1)
+### Lo que debo (Mathias)
 
 **C4 · Seguridad en la puerta de entrada — semana 3.** ✅ Hecho en la semana 2.
 
-- **Rutas públicas** (sin token): `POST /auth/login`, `POST /auth/registro`, `GET /productos/**`, `GET /marcas`, `GET /categorias`.
+- **Rutas públicas** (sin token): `POST /auth/login`, `POST /auth/registro`, `GET /productos/**`, `GET /marcas`, `GET /categorias`, `GET /stock` (stock de varios productos con `?ids=`) y `GET /stock/{idProducto}`.
 - **El resto exige un JWT válido**: si falta o es inválido, **401** sin llegar al servicio. El token sigue viajando en `Authorization`, porque cada servicio lo vuelve a validar con `common-security`.
 - **Rutas internas bloqueadas desde afuera** (**403**): `/stock/reservar`, `/stock/confirmar`, `/stock/liberar` y `POST /comprobantes`. Solo las llama ms-pedidos, por Feign y dentro de la red; si el gateway las dejara pasar, un cliente podría reservar stock o emitir comprobantes a mano.
 
@@ -59,8 +59,8 @@ El mapa completo está en [`ARRANQUE_PROYECTO.md`](../ARRANQUE_PROYECTO.md#quié
 
 | Contrato | Quién lo entrega | Semana | Para qué lo uso |
 |---|---|---|---|
-| **C1** · formato del JWT (`sub`, `rol`, `idUsuario`) | Integrante 2 | 2 | Validar el token |
-| **C3** · `POST /auth/login` | Integrante 2 | 3 | Probar el flujo completo con un token real |
+| **C1** · formato del JWT (`sub`, `rol`, `idUsuario`) | Galarza | 2 | Validar el token |
+| **C3** · `POST /auth/login` | Galarza | 3 | Probar el flujo completo con un token real |
 
 **Cómo avanzar sin esperar:** `JwtService` ya funciona. Puedes generar un token de prueba en un test y desarrollar el filtro sin esperar el login.
 

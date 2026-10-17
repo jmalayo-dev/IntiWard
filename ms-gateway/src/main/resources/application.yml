@@ -44,6 +44,7 @@ intiguard:
       - GET /productos/**
       - GET /marcas/**
       - GET /categorias/**
+      - GET /stock
       - GET /stock/*
       - /actuator/health/**
     # Solo las llama ms-pedidos por Feign, dentro de la red. Desde afuera: 403 siempre.
