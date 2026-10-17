@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Responsable** | Integrante 2 (dueño de ms-auth) |
+| **Responsable** | Galarza (dueño de ms-auth) |
 | **Tipo** | Librería Maven, **no** es un servicio: no tiene puerto ni `main` |
 | **La importan** | ms-auth, ms-catalogo, ms-inventario, ms-pedidos, ms-comprobantes |
 
@@ -23,7 +23,7 @@ Para que los cinco servicios validen el token **de la misma forma** sin copiar c
 | `IntiGuardSecurityAutoConfiguration` | ✅ Arma la cadena de seguridad con todo lo anterior y apaga el usuario y la clave que Spring genera por defecto |
 | Tests | ✅ `JwtServiceTest` (2) y `JwtAuthFilterTest` (8: pública, 401, token válido, token inválido, 403 por rol, ADMIN, y modo sin token obligatorio) |
 
-> Lo construyó el integrante 1 en la semana 2 para desbloquear al equipo (C1 y C2). El integrante 2 sigue siendo el dueño: el login (C3) usa `JwtService.generarToken(usuario.getId(), correo, rol)`.
+> Lo construyó Mathias en la semana 2 para desbloquear al equipo (C1 y C2). Galarza sigue siendo el dueño: el login (C3) usa `JwtService.generarToken(usuario.getId(), correo, rol)`.
 
 > **Ojo con el orden:** la autoconfiguración se declara `before` de la de Spring Security, de la de `UserDetailsService` **y** de la del actuator. Si se quita eso, gana la cadena por defecto de Spring y todos los endpoints piden Basic Auth (401).
 
@@ -83,13 +83,13 @@ Firma con la `JWT_SECRET` del `.env` (o la de desarrollo), igual que lo hará el
 
 Esta librería la importan los 5 servicios de negocio. El mapa completo está en [`ARRANQUE_PROYECTO.md`](../ARRANQUE_PROYECTO.md#quién-le-debe-a-quién).
 
-### Lo que debo (integrante 2)
+### Lo que debo (Galarza)
 
 | Contrato | A quién | Semana | Detalle |
 |---|---|---|---|
 | **C1** · claim `idUsuario` en el token | Todos | 2 | ✅ `generarToken(idUsuario, correo, rol)` y la constante `CLAIM_ID_USUARIO = "idUsuario"` |
-| **C2** · `JwtAuthFilter` | Integrantes 3, 4 y 5 | 3 | ✅ Rutas públicas sin token; el resto exige `Authorization: Bearer` cuando `EXIGIR_TOKEN=true`. Responde **401** (sin token o token inválido) y **403** (rol insuficiente) en formato `ApiError` |
-| **C2** · `UsuarioActual` | Integrantes 4 y 5 | 3 | ✅ `id()`, `correo()`, `rol()` y `esAdmin()` del usuario autenticado, leídos del `SecurityContext`. Nadie parsea el token por su cuenta |
+| **C2** · `JwtAuthFilter` | César, Arévalo, Evelyn y Galarza (comprobantes) | 3 | ✅ Rutas públicas sin token; el resto exige `Authorization: Bearer` cuando `EXIGIR_TOKEN=true`. Responde **401** (sin token o token inválido) y **403** (rol insuficiente) en formato `ApiError` |
+| **C2** · `UsuarioActual` | Evelyn, Arévalo y Galarza (comprobantes) | 3 | ✅ `id()`, `correo()`, `rol()` y `esAdmin()` del usuario autenticado, leídos del `SecurityContext`. Nadie parsea el token por su cuenta |
 
 Cuando el login (C3) esté listo, se pasa `EXIGIR_TOKEN=true` para todos y **se avisa por el grupo**: desde ese momento Postman necesita el token en todas las rutas protegidas.
 

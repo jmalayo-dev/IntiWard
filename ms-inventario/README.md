@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Responsable** | Integrante 5 (también lleva ms-comprobantes) |
+| **Responsable** | Arévalo · rama `b-arevalo` |
 | **Puerto** | 8083 |
 | **Nombre en Eureka** | `ms-inventario` |
 | **Schema MySQL** | `db_inventario` (usuario `ms_inventario`) · script `infra/mysql/03-inventario.sql` |
@@ -13,7 +13,7 @@
 
 Es el dueño de **cuántas unidades hay** de cada producto y de **todo lo que le pasó a ese número**. La tabla de movimientos es lo que hace medible el Objetivo 2 del informe (*reducir errores logísticos en 30 %*): sin historial no hay nada que auditar.
 
-Es el servicio más pequeño (3 tablas y una vista, 5 endpoints), por eso el integrante 5 lleva dos servicios.
+Es el servicio más pequeño (3 tablas y una vista).
 
 ## Concepto clave: reservar → confirmar / liberar
 
@@ -110,16 +110,139 @@ Si `stock` dice 7 y 0, cuadra. Una fila donde lo actual no coincide con lo esper
 
 ## Endpoints objetivo
 
-| Método | Ruta | Quién | Estado |
-|---|---|---|---|
-| GET | `/stock/{idProducto}` | Público / interno | ✅ |
-| POST | `/stock/reservar` | Interno (ms-pedidos) | ⬜ |
-| POST | `/stock/confirmar` | Interno (ms-pedidos) | ⬜ |
-| POST | `/stock/liberar` | Interno (ms-pedidos) | ⬜ |
-| POST | `/stock/entrada` o `PUT /stock/{idProducto}` | ADMIN (reposición/ajuste) | ⬜ |
-| GET | `/movimientos?idProducto=` | ADMIN | ⬜ |
+| Método | Ruta | Quién | Estado | Bloqueo |
+|---|---|---|---|---|
+| GET | `/stock/{idProducto}` | Público | 🟡 falta `actualizadoEn` y responder 0 sin fila | 🟢 |
+| GET | `/stock?ids=1,2,3` | Público | ⬜ nuevo | ⛔ bloquea el filtro `conStock` de ms-catalogo |
+| POST | `/stock/entrada` | ADMIN | ⬜ | 🔗 ms-catalogo |
+| PUT | `/stock/{idProducto}` | ADMIN (ajuste) | ⬜ | 🔗 ms-catalogo |
+| GET | `/movimientos?idProducto=` | ADMIN | ⬜ | 🟢 |
+| POST | `/stock/reservar` | Interno (ms-pedidos) | ⬜ | ⛔ bloquea el checkout de ms-pedidos |
+| POST | `/stock/confirmar` | Interno (ms-pedidos) | ⬜ | ⛔ bloquea el checkout de ms-pedidos |
+| POST | `/stock/liberar` | Interno (ms-pedidos) | ⬜ | ⛔ bloquea el checkout de ms-pedidos |
 
-Los cuerpos y las respuestas de reservar, confirmar y liberar están en el contrato **C6** (sección "Dependencias con otros servicios").
+Los cuerpos y las respuestas de reservar, confirmar y liberar están en el contrato **C6** (sección "Dependencias con otros servicios"). El resto está en "Contrato con el cliente web".
+
+## Contrato con el cliente web
+
+La app web vive en otro repositorio (`DSW_II_PROYECTO_WEB`). Su archivo `docs/CONTRATO_ENDPOINTS.md` define todo lo que necesita del backend; esta sección copia la parte de **este** servicio. Hoy la web funciona con datos simulados (mocks) que responden exactamente lo que dice aquí: **si tu endpoint responde igual, la web se conecta sin cambios.**
+
+Cuando termines un endpoint, márcalo en [`docs/SEGUIMIENTO_ENDPOINTS.csv`](../docs/SEGUIMIENTO_ENDPOINTS.csv): `SI` en `cumplido` y la fecha en `fecha_cumplimiento` (`AAAA-MM-DD`).
+
+**Reglas comunes a todos los servicios:**
+- Rutas relativas al gateway (`http://localhost:8080`). Toda ruta que no sea pública recibe `Authorization: Bearer <token>`.
+- **Tipos:** ids `Long`; montos `BigDecimal` con 2 decimales (en el JSON van como número: `199.9`); fechas `LocalDateTime` en ISO sin zona (`"2026-10-15T14:35:00"`); filtros de fecha `LocalDate` (`"2026-10-15"`); enums como texto en mayúsculas (`ADMIN`, `BOLETA`, `CONFIRMADA`).
+- **Nunca borrado físico:** `DELETE` pone `activo = false`.
+- **Errores:** siempre con `ApiError`, y **`mensaje` siempre presente** (la web lo muestra tal cual). Los errores de validación van en `detalles`, uno por campo, con el formato `"campo: mensaje"` (ya lo hace el `GlobalExceptionHandler`); la web parte el texto por `:` para marcar el campo.
+- **Vistas:** los números 4.x (tienda) y 5.x (panel de administración) son las vistas del prototipo web ([`docs/PROTOTIPO_WEB.md`](../docs/PROTOTIPO_WEB.md)).
+- **Bloqueo:** ⛔ **BLOQUEANTE** = otro integrante no puede terminar lo suyo sin este endpoint · 🔗 **DEPENDIENTE** = necesita un endpoint de otro servicio · 🟢 **NO DEPENDIENTE** = se hace solo.
+
+### Objeto `Stock` (`StockResponse`)
+
+```json
+{ "idProducto": 1, "disponible": 12, "reservado": 2, "actualizadoEn": "2026-10-15T14:35:00" }
+```
+
+| Atributo | Tipo | Para qué lo usa la web |
+|---|---|---|
+| `idProducto` | `Long` | Une el stock con su producto |
+| `disponible` | `Integer` | Unidades que se pueden comprar ya. **Lo reservado ya está descontado** (al reservar: `disponible − n`, `reservado + n`) |
+| `reservado` | `Integer` | Unidades apartadas por compras en curso; columna en 5.5 |
+| `actualizadoEn` | `LocalDateTime` · **nuevo** | Fecha del último cambio; columna "Actualizado" en 5.5. La columna `actualizado_en` ya existe: solo falta agregarla al DTO |
+
+La web muestra "Agotado" con 0 unidades y "Pocas unidades" con 5 o menos, deshabilita "Agregar al carrito" y avisa en el carrito si la cantidad pedida supera lo disponible.
+
+### Objeto `Movimiento`
+
+```json
+{ "id": 10, "idProducto": 1, "tipo": "RESERVA", "cantidad": 2, "idVenta": 43, "motivo": null, "creadoEn": "2026-10-15T14:35:00" }
+```
+
+| Atributo | Tipo | Para qué lo usa la web |
+|---|---|---|
+| `id` | `Long` | Clave de la fila |
+| `idProducto` | `Long` | Nombre del producto y filtro por producto |
+| `tipo` | `String`: `ENTRADA` · `RESERVA` · `CONFIRMACION` · `LIBERACION` · `AJUSTE` | Insignia de color y filtro por tipo |
+| `cantidad` | `Integer` | Unidades. En `AJUSTE` lleva signo (`-3` resta); en los demás, siempre positiva |
+| `idVenta` | `Long` o `null` | Enlace a la venta en reservas, confirmaciones y liberaciones |
+| `motivo` | `String` o `null` | Razón escrita por el admin en entradas y ajustes |
+| `creadoEn` | `LocalDateTime` | Columna de fecha y orden |
+
+**Producto sin fila de stock (decidido el 2026-10-17):** catálogo **no** avisa a inventario cuando crea un producto. Un producto sin entradas **tiene stock 0**:
+- `GET /stock/{id}` responde **200** `{ "idProducto": 7, "disponible": 0, "reservado": 0, "actualizadoEn": null }`, no 404.
+- `GET /stock?ids=` devuelve una entrada por cada id pedido, en 0 si no tiene fila. Sin `ids`, solo las filas que existen.
+- La primera ENTRADA o el primer ajuste crea la fila (antes se valida que el producto exista en catálogo).
+- Reservar un producto sin fila responde 409, igual que si no alcanzara.
+
+### `GET /stock/{idProducto}` · Público · 🟡 · 🟢
+
+**Para qué:** la disponibilidad de un producto y el tope del selector de cantidad del detalle.
+**Vistas:** 4.3 Detalle de producto.
+
+Responde **200**: `Stock`. Si el producto aún no tiene entradas, **200 con todo en 0** (`actualizadoEn: null`), no 404.
+Falta: `actualizadoEn` y la respuesta en 0.
+
+### `GET /stock?ids=1,2,3` · Público · ⬜ nuevo · ⛔ bloquea ms-catalogo
+
+**Para qué:** pedir el stock de toda una grilla en **una sola llamada**, en vez de una por tarjeta. **Sin `ids` devuelve todos** (tabla de stock y campana de agotados).
+**Vistas:** 4.1 Inicio, 4.2 Catálogo y 4.3 Detalle (insignias de la grilla) · 4.6 Carrito y 4.7 Checkout (aviso de stock insuficiente) · 5.1 Resumen · 5.2 Productos · 5.5 Stock · campana de agotados del panel (sin `ids`).
+
+| Parámetro | Tipo | Regla |
+|---|---|---|
+| `ids` | `List<Long>` | Opcional. `ids=1,2,3` |
+
+Responde **200**: `List<Stock>` con **una entrada por cada id pedido** (en 0 si no tiene fila). Sin `ids`, todas las filas que existen.
+
+**Ruta pública:** `GET /stock/*` **no** cubre `/stock` sin nada después. En el gateway ya está agregada `GET /stock` (Mathias, 2026-10-17); **falta en tu `application.yml`**: agrega `- GET /stock` en `intiguard.security.rutas-publicas`.
+
+ms-catalogo lo necesita para su filtro `conStock`.
+
+### `POST /stock/entrada` · ADMIN · ⬜ · 🔗 ms-catalogo
+
+**Para qué:** registrar mercadería que llegó del proveedor.
+**Vistas:** 5.5 Stock (ventana "Registrar entrada").
+
+| Envía | Tipo | Regla |
+|---|---|---|
+| `idProducto` | `Long` | Producto que recibe mercadería; debe existir en catálogo |
+| `cantidad` | `Integer` | Mayor que 0; **se suma** a `disponible` |
+| `motivo` | `String` | Opcional (por ejemplo "Compra a proveedor") |
+
+Responde **200**: `Stock` actualizado. Registra un movimiento `ENTRADA`. Si el producto aún no tenía fila de stock, la crea. **400**. **404** si el producto no existe.
+
+Para validar el producto se llama a ms-catalogo `GET /productos/{id}` (contrato C5, de César). **Mientras no esté:** haz la entrada sin validar y agrega la validación al final.
+
+### `PUT /stock/{idProducto}` · ADMIN · ⬜ · 🔗 ms-catalogo
+
+**Para qué:** corregir el stock después de un conteo físico (rotura, pérdida, error de carga).
+**Vistas:** 5.5 Stock (ventana "Ajustar").
+
+| Envía | Tipo | Regla |
+|---|---|---|
+| `disponible` | `Integer` | **Nuevo valor absoluto** (no una diferencia); 0 o más |
+| `motivo` | `String` | Obligatorio (por ejemplo "Conteo físico") |
+
+Responde **200**: `Stock`. Registra un `AJUSTE` con la **diferencia con signo** (nuevo − anterior). Si el producto no tenía fila, la crea (validando con ms-catalogo `GET /productos/{id}` que el producto exista, como en la entrada). **400** si falta el motivo o el valor es negativo. **404** si el producto no existe.
+
+Cuidado: si el valor nuevo es igual al actual, **no registres movimiento**: la base rechaza un movimiento con cantidad 0 (`ck_movimiento_cantidad`).
+
+### `GET /movimientos` · ADMIN · ⬜ · 🟢
+
+**Para qué:** el historial auditable de todo lo que le pasó al stock.
+**Vistas:** 5.6 Movimientos.
+
+| Parámetro | Tipo | Regla |
+|---|---|---|
+| `idProducto` | `Long` | Opcional; sin él devuelve todos |
+
+Responde **200**: `List<Movimiento>`, **del más reciente al más antiguo**.
+
+### `POST /stock/reservar` · `/confirmar` · `/liberar` · Internos · ⬜ · ⛔ bloquean ms-pedidos
+
+**Para qué:** apartar, vender o devolver las unidades durante el checkout. La web **nunca** los llama (el gateway responde 403 desde afuera), pero sin ellos no hay compra.
+**Vistas (indirectas):** 4.7 Checkout · 4.8 Compra confirmada · 4.9 Compra no completada.
+
+Cuerpos y respuestas: contrato **C6**, más abajo. Lo que agrega la web: en el **409** de reservar, pon el producto que falló en `detalles` con el formato `"idProducto: 7"`. ms-pedidos lo reenvía tal cual y la web lo usa para mostrar el producto agotado en 4.9.
 
 ## Reglas de negocio
 
@@ -134,11 +257,11 @@ El mapa completo está en [`ARRANQUE_PROYECTO.md`](../ARRANQUE_PROYECTO.md#quié
 
 ### Lo que debo (me lo piden)
 
-**C6 · Reservas para el checkout de ms-pedidos (integrante 4) — fin de la semana 3.** Es la dependencia más crítica del proyecto: sin esto no hay checkout.
+**C6 · Reservas para el checkout de ms-pedidos (Evelyn) — fin de la semana 3.** Es la dependencia más crítica del proyecto: sin esto no hay checkout.
 
 | Endpoint | Cuerpo | Respuesta |
 |---|---|---|
-| `POST /stock/reservar` | `{ "idVenta": 42, "items": [ { "idProducto": 1, "cantidad": 2 } ] }` | **200** `{ "idVenta": 42, "expiraEn": "…" }` · **409** `ApiError` si algún ítem no alcanza (el mensaje dice cuál `idProducto`). Todo o nada |
+| `POST /stock/reservar` | `{ "idVenta": 42, "items": [ { "idProducto": 1, "cantidad": 2 } ] }` | **200** `{ "idVenta": 42, "expiraEn": "…" }` · **409** `ApiError` si algún ítem no alcanza: el `mensaje` dice cuál y `detalles` trae `["idProducto: 7"]`. Todo o nada |
 | `POST /stock/confirmar` | `{ "idVenta": 42 }` | **200**. Confirma todas las reservas ACTIVAS de esa venta. Si ya estaban confirmadas, responde 200 sin hacer nada |
 | `POST /stock/liberar` | `{ "idVenta": 42 }` | **200**. Libera todas las reservas ACTIVAS de esa venta. Si no hay ninguna, responde 200 igual (idempotente) |
 
@@ -148,9 +271,9 @@ Confirmar y liberar solo reciben `idVenta`, porque las cantidades ya quedaron gu
 
 | Contrato | Quién lo entrega | Semana | Para qué lo uso |
 |---|---|---|---|
-| **C5** · `GET /productos/{id}` (404 si no existe) | Integrante 3 | 2 | Validar el producto al registrar una ENTRADA |
-| **C8** · `idVenta` real y token reenviado | Integrante 4 | 4 | Reservar, confirmar y liberar |
-| **C2** · `JwtAuthFilter` | Integrante 2 | 3 | Proteger entrada, ajuste y movimientos (solo ADMIN) |
+| **C5** · `GET /productos/{id}` (404 si no existe) | César | 2 | Validar el producto en la primera ENTRADA o ajuste (cuando aún no tiene fila de stock) |
+| **C8** · `idVenta` real y token reenviado | Evelyn | 4 | Reservar, confirmar y liberar |
+| **C2** · `JwtAuthFilter` | Galarza | 3 | Proteger entrada, ajuste y movimientos (solo ADMIN) |
 
 ### Cómo avanzar sin esperar
 
@@ -160,7 +283,7 @@ Confirmar y liberar solo reciben `idVenta`, porque las cantidades ya quedaron gu
 
 - [ ] **Semana 2–3**: `reservar`, `confirmar`, `liberar` con su `Reserva` y su movimiento; tarea `@Scheduled` que libera las reservas vencidas; `GET /movimientos`; entrada y ajuste de stock (ADMIN); `StockInsuficienteException` → 409.
 - [ ] **Semana 4**: acordar el contrato con ms-pedidos y probar el checkout juntos.
-- [ ] **Semana 5**: semilla de stock para los 200 productos (coordinar con el integrante 3).
+- [ ] **Semana 5**: semilla de stock para los 200 productos (coordinar con César).
 - [ ] **Semana 6**: pantalla `/admin/stock` en `web-client`.
 - [ ] **Semana 7**: tests Mockito de `StockService` (reserva OK, stock insuficiente, liberar devuelve el disponible) y `postman/ms-inventario.postman_collection.json`.
 
