@@ -81,7 +81,10 @@ public class ProductoService {
         return (raiz, consulta, cb) -> {
             List<Predicate> condiciones = new ArrayList<>();
             if (!f.incluirInactivos()) {
+                // Una marca o categoría inactiva oculta sus productos de la tienda
                 condiciones.add(cb.isTrue(raiz.get("activo")));
+                condiciones.add(cb.isTrue(raiz.get("marca").get("activo")));
+                condiciones.add(cb.isTrue(raiz.get("categoria").get("activo")));
             }
             if (f.categoria() != null) {
                 condiciones.add(porIdONombre(cb, raiz.get("categoria"), f.categoria()));
