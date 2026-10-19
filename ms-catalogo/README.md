@@ -73,26 +73,27 @@ Por eso:
 |---|---|---|
 | Entity | `Marca`, `Categoria`, `Producto` | ✅ |
 | Repository | `ProductoRepository.findByActivoTrue`, `findByCategoriaIdAndActivoTrue`; `MarcaRepository`, `CategoriaRepository` | ✅ con test `@DataJpaTest` |
-| DTO / Mapper | `ProductoResponse` (marca y categoría como texto), `ProductoMapper` | ✅ |
-| Service | `ProductoService.listar/obtener` | ✅ |
-| Controller | `GET /productos`, `GET /productos/{id}` (404 si no existe) | ✅ verificado por el gateway |
+| Entity nueva | `ProductoEspecificacion` (`@OneToMany` con `orphanRemoval`, `@BatchSize`) | ✅ |
+| DTO / Mapper | `ProductoResponse` (con `activo`, `idMarca`, `idCategoria`, `especificaciones`), `NombreActivoResponse`, `ProductoMapper` | ✅ |
+| Service | `ProductoService` (filtros con `Specification`, `conStock` vía `InventarioClient`, CRUD), `MarcaCategoriaService` (contador de activos, nombre único) | ✅ |
+| Controller | `ProductoController` (página `VIA_DTO`, `sort` precio/nombre, `size` hasta 100), `MarcaCategoriaController` | ✅ con `CatalogoIntegracionTest` (7, HTTP + H2) |
 | Errores | `GlobalExceptionHandler` + `ApiError` | ✅ |
 
 ## Endpoints objetivo
 
 | Método | Ruta | Quién | Estado | Bloqueo |
 |---|---|---|---|---|
-| GET | `/productos` | Público (`inactivos` solo ADMIN) | 🟡 sin paginación ni filtros | 🔗 ms-inventario (filtro `conStock`) |
-| GET | `/productos/{id}` | Público | 🟡 faltan `activo`, `idMarca`, `idCategoria`, `especificaciones` | ⛔ bloquea ms-pedidos e ms-inventario |
-| POST | `/productos` | ADMIN | ⬜ | 🟢 |
-| PUT | `/productos/{id}` | ADMIN | ⬜ | 🟢 |
-| DELETE | `/productos/{id}` | ADMIN (borrado lógico `activo = false`) | ⬜ | 🟢 |
-| GET | `/marcas` | Público (ADMIN ve también las inactivas) | ⬜ | 🟢 |
-| GET | `/categorias` | Público (ADMIN ve también las inactivas) | ⬜ | 🟢 |
-| POST | `/marcas` | ADMIN | ⬜ nuevo | 🟢 |
-| POST | `/categorias` | ADMIN | ⬜ nuevo | 🟢 |
-| PUT | `/marcas/{id}` | ADMIN | ⬜ nuevo | 🟢 |
-| PUT | `/categorias/{id}` | ADMIN | ⬜ nuevo | 🟢 |
+| GET | `/productos` | Público (`inactivos` solo ADMIN) | ✅ | 🔗 ms-inventario (filtro `conStock`) |
+| GET | `/productos/{id}` | Público | ✅ | ⛔ bloquea ms-pedidos e ms-inventario |
+| POST | `/productos` | ADMIN | ✅ | 🟢 |
+| PUT | `/productos/{id}` | ADMIN | ✅ | 🟢 |
+| DELETE | `/productos/{id}` | ADMIN (borrado lógico `activo = false`) | ✅ | 🟢 |
+| GET | `/marcas` | Público (ADMIN ve también las inactivas) | ✅ | 🟢 |
+| GET | `/categorias` | Público (ADMIN ve también las inactivas) | ✅ | 🟢 |
+| POST | `/marcas` | ADMIN | ✅ | 🟢 |
+| POST | `/categorias` | ADMIN | ✅ | 🟢 |
+| PUT | `/marcas/{id}` | ADMIN | ✅ | 🟢 |
+| PUT | `/categorias/{id}` | ADMIN | ✅ | 🟢 |
 
 El detalle de cada uno está en "Contrato con el cliente web".
 
@@ -162,7 +163,7 @@ Formato `VIA_DTO` de Spring Data: se activa con `@EnableSpringDataWebSupport(pag
 | `activo` | `Boolean` | Interruptor de 5.4; la tienda solo recibe las activas |
 | `productos` | `Long` | Cantidad de productos **activos** de esa marca o categoría: contador al lado de cada filtro (4.2) y columna en 5.4 |
 
-### `GET /productos` · Público · 🟡 sin paginación ni filtros · 🔗 ms-inventario
+### `GET /productos` · Público · ✅ · 🔗 ms-inventario
 
 **Para qué:** la grilla de la tienda, el buscador y las tablas del panel. Es el endpoint que más se usa.
 **Vistas:** 4.1 Inicio (`size=24`) · 4.2 Catálogo (todos los filtros, `size=9`) · 4.3 Detalle (relacionados: `categoria&size=5`) · buscador del encabezado (sugerencias: `q&size=5`) · 5.1 Resumen · 5.2 Productos (filtros, `inactivos`, y `size=1` solo para leer `totalElements`) · 5.5 Stock · 5.6 Movimientos · 5.9 Reportes · campana de agotados del panel.
@@ -181,21 +182,19 @@ Formato `VIA_DTO` de Spring Data: se activa con `@EnableSpringDataWebSupport(pag
 
 Los filtros se combinan entre sí (Y). Responde **200**: `Página` de `Producto`.
 
-**Mientras ms-inventario no tenga `GET /stock`:** haz todo lo demás; `conStock` es lo único que depende de Arévalo.
 
-### `GET /productos/{id}` · Público · 🟡 · ⛔ bloquea ms-pedidos e ms-inventario
+### `GET /productos/{id}` · Público · ✅ · ⛔ bloquea ms-pedidos e ms-inventario
 
 **Para qué:** el detalle de un producto, y los datos de un producto puntual en pedidos, carrito y edición.
 **Vistas:** 4.3 Detalle de producto · 4.9 Compra no completada (nombre del producto agotado) · 4.10 Mis pedidos y 4.11 Detalle de mi pedido (miniaturas) · detalle de venta del panel · 5.3 Editar producto.
 
 Responde **200**: `Producto`. **404** si no existe.
-Falta: `activo`, `idMarca`, `idCategoria` y `especificaciones`.
 
 **Producto inactivo (decidido el 2026-10-17):** responde **200 con `activo: false`** a todos, también al público (contrato C5). ms-pedidos lo necesita para distinguir "no existe" de "descontinuado", y los pedidos pasados lo siguen mostrando. Es la web la que muestra "no encontrado" a quien no es admin. **404 solo si el id no existe.**
 
 Lo usan ms-pedidos (carrito y checkout) e ms-inventario (validar la entrada de stock): **es lo primero que hay que completar** (campo `activo`).
 
-### `POST /productos` · ADMIN · ⬜ · 🟢
+### `POST /productos` · ADMIN · ✅ · 🟢
 
 **Para qué:** crear un producto desde el panel.
 **Vistas:** 5.3 Crear producto.
@@ -215,7 +214,7 @@ Responde **201**: `Producto`. **400** con `detalles` (si la marca o la categorí
 
 **Stock del producto nuevo (decidido el 2026-10-17):** este endpoint **no llama a inventario**. Un producto sin entradas tiene stock 0; ms-inventario crea su fila con la primera entrada.
 
-### `PUT /productos/{id}` · ADMIN · ⬜ · 🟢
+### `PUT /productos/{id}` · ADMIN · ✅ · 🟢
 
 **Para qué:** editar un producto, o reactivarlo desde el interruptor de la tabla.
 **Vistas:** 5.3 Editar producto · 5.2 Productos (interruptor: reactivar).
@@ -223,28 +222,28 @@ Responde **201**: `Producto`. **400** con `detalles` (si la marca o la categorí
 Envía los mismos campos que `POST`. También acepta **solo** `{ "activo": true }` para reactivar: valida únicamente los campos que llegan. Si viene `especificaciones`, **la lista enviada reemplaza a la anterior** (`orphanRemoval` borra las que ya no están); si no viene, no se tocan.
 Responde **200**: `Producto`. **400**. **404**.
 
-### `DELETE /productos/{id}` · ADMIN · ⬜ · 🟢
+### `DELETE /productos/{id}` · ADMIN · ✅ · 🟢
 
 **Para qué:** desactivar un producto (deja de verse en la tienda, pero las ventas pasadas lo siguen mostrando).
 **Vistas:** 5.2 Productos (interruptor: desactivar).
 
 Pone `activo = false`. Responde **204** sin cuerpo. **404**.
 
-### `GET /marcas` · `GET /categorias` · Público · ⬜ · 🟢
+### `GET /marcas` · `GET /categorias` · Público · ✅ · 🟢
 
 **Para qué:** los filtros del catálogo con su contador, las listas desplegables del formulario y la tabla de 5.4.
 **Vistas:** 4.2 Catálogo (filtros con contador) · buscador del encabezado (sugerencias) · 5.2 Productos (filtros) · 5.3 Crear/editar producto (listas desplegables) · 5.4 Marcas y categorías.
 
 Responde **200**: `List<Marca>` / `List<Categoria>`. El público recibe **solo las activas**; el ADMIN recibe **todas**.
 
-### `POST /marcas` · `POST /categorias` · ADMIN · ⬜ nuevo · 🟢
+### `POST /marcas` · `POST /categorias` · ADMIN · ✅ · 🟢
 
 **Para qué:** agregar una marca o una categoría.
 **Vistas:** 5.4 Marcas y categorías.
 
 Envía `{ "nombre": String }`. Responde **201**: `Marca` / `Categoria` con `activo: true`. **400** si el nombre está vacío. **409** si el nombre ya existe (sin distinguir mayúsculas).
 
-### `PUT /marcas/{id}` · `PUT /categorias/{id}` · ADMIN · ⬜ nuevo · 🟢
+### `PUT /marcas/{id}` · `PUT /categorias/{id}` · ADMIN · ✅ · 🟢
 
 **Para qué:** renombrar, activar o desactivar una marca o categoría.
 **Vistas:** 5.4 Marcas y categorías.
