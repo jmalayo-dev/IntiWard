@@ -318,6 +318,23 @@ Para ver el log **en vivo** mientras pruebas: `docker compose logs -f ms-catalog
 
 
 
+## 6.1 Probar el flujo completo (todos los servicios)
+
+Con Eureka, el gateway y los cinco servicios arriba (`docker compose up -d`) y un administrador en Aiven
+(`ADMIN_CORREO` y `ADMIN_CLAVE` en el `.env` antes de levantar ms-auth):
+
+```bash
+set -a; . ./.env; set +a
+python3 -I pruebas/prueba-e2e.py          # 52 verificaciones: catálogo, registro, perfil, seguridad, panel, carrito, checkout, comprobantes y PDF
+docker compose stop ms-comprobantes
+python3 -I pruebas/prueba-e2e.py caida    # el checkout responde 503, libera el stock y anula la venta
+docker compose start ms-comprobantes
+python3 -I pruebas/prueba-e2e.py web      # llamadas del panel con todo el catálogo y limpieza de los datos de prueba
+```
+
+Para probarlo a través de la web, agrega `GW=http://localhost:5173/api` con `npm run dev` corriendo en `DSW_II_PROYECTO_WEB`.
+El script crea un producto y dos clientes de prueba (`e2e.*@intiguard.pe`); la fase `web` los desactiva.
+
 ## 7. El día a día con Docker
 
 
