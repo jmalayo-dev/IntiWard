@@ -478,25 +478,25 @@ export const ENDPOINTS = {
 | Servicio | Método y ruta | Quién | Backend | Mock |
 |---|---|---|---|---|
 | auth | `POST /auth/login` | Público | ✅ | ✅ |
-| auth | `POST /auth/registro` | Público | ⬜ | ✅ |
+| auth | `POST /auth/registro` | Público | ✅ | ✅ |
 | auth | `GET /usuarios` · `GET /usuarios/{id}` | ADMIN (o el mismo usuario) | ✅ | ✅ |
-| auth | `POST /usuarios` · `PUT /usuarios/{id}` · `DELETE /usuarios/{id}` | ADMIN | ⬜ | ✅ |
-| auth | `GET` / `PUT /usuarios/me` (propuesta) | El mismo usuario | ⬜ | ✅ |
-| catalogo | `GET /productos?page&size&categoria&marca&q` + `precioMin`, `precioMax`, `conStock`, `sort`, `inactivos` (propuesta) | Público (`inactivos` solo ADMIN) | 🟡 sin paginación ni filtros | ✅ |
-| catalogo | `GET /productos/{id}` (200 también si está inactivo, con `activo: false`) | Público | 🟡 faltan campos | ✅ |
-| catalogo | `POST /productos` · `PUT /productos/{id}` (con `especificaciones`) · `DELETE /productos/{id}` | ADMIN | ⬜ | ✅ |
-| catalogo | `GET /marcas` · `GET /categorias` | Público | ⬜ | ✅ |
-| catalogo | `POST /marcas` · `PUT /marcas/{id}` · `POST /categorias` · `PUT /categorias/{id}` (propuesta) | ADMIN | ⬜ | ✅ |
-| inventario | `GET /stock/{idProducto}` (sin entradas: 200 en 0) | Público | 🟡 falta `actualizadoEn` | ✅ |
-| inventario | `GET /stock?ids=1,2,3` (propuesta; una entrada por id, en 0 si no tiene stock; sin `ids`, todos) | Público | ⬜ | ✅ |
-| inventario | `POST /stock/entrada` · `PUT /stock/{idProducto}` | ADMIN | ⬜ | ✅ |
-| inventario | `GET /movimientos?idProducto=` | ADMIN | ⬜ | ✅ |
-| pedidos | `GET /carrito` · `POST /carrito/items` · `PUT` / `DELETE /carrito/items/{idProducto}` | CLIENTE | ⬜ | ✅ |
-| pedidos | `POST /pedidos/checkout` | CLIENTE | ⬜ | ✅ |
-| pedidos | `GET /pedidos` · `GET /pedidos/{id}` | Dueño o ADMIN | 🟡 sin control de dueño | ✅ |
-| comprobantes | `GET /comprobantes` · `GET /comprobantes/{id}` | Dueño o ADMIN | 🟡 sin control de dueño | ✅ |
-| comprobantes | `GET /comprobantes/venta/{idVenta}` · `GET /comprobantes/{id}/pdf` | Dueño o ADMIN | ⬜ | ✅ |
-| comprobantes | `GET /comprobantes/reporte?desde&hasta` | ADMIN | ⬜ | ✅ |
+| auth | `POST /usuarios` · `PUT /usuarios/{id}` · `DELETE /usuarios/{id}` | ADMIN | ✅ | ✅ |
+| auth | `GET` / `PUT /usuarios/me` (propuesta) | El mismo usuario | ✅ | ✅ |
+| catalogo | `GET /productos?page&size&categoria&marca&q` + `precioMin`, `precioMax`, `conStock`, `sort`, `inactivos` (propuesta) | Público (`inactivos` solo ADMIN) | ✅ | ✅ |
+| catalogo | `GET /productos/{id}` (200 también si está inactivo, con `activo: false`) | Público | ✅ | ✅ |
+| catalogo | `POST /productos` · `PUT /productos/{id}` (con `especificaciones`) · `DELETE /productos/{id}` | ADMIN | ✅ | ✅ |
+| catalogo | `GET /marcas` · `GET /categorias` | Público | ✅ | ✅ |
+| catalogo | `POST /marcas` · `PUT /marcas/{id}` · `POST /categorias` · `PUT /categorias/{id}` (propuesta) | ADMIN | ✅ | ✅ |
+| inventario | `GET /stock/{idProducto}` (sin entradas: 200 en 0) | Público | ✅ | ✅ |
+| inventario | `GET /stock?ids=1,2,3` (propuesta; una entrada por id, en 0 si no tiene stock; sin `ids`, todos) | Público | ✅ | ✅ |
+| inventario | `POST /stock/entrada` · `PUT /stock/{idProducto}` | ADMIN | ✅ | ✅ |
+| inventario | `GET /movimientos?idProducto=` | ADMIN | ✅ | ✅ |
+| pedidos | `GET /carrito` · `POST /carrito/items` · `PUT` / `DELETE /carrito/items/{idProducto}` | CLIENTE | ✅ | ✅ |
+| pedidos | `POST /pedidos/checkout` | CLIENTE | ✅ | ✅ |
+| pedidos | `GET /pedidos` · `GET /pedidos/{id}` | Dueño o ADMIN | ✅ | ✅ |
+| comprobantes | `GET /comprobantes` · `GET /comprobantes/{id}` | Dueño o ADMIN | ✅ | ✅ |
+| comprobantes | `GET /comprobantes/venta/{idVenta}` · `GET /comprobantes/{id}/pdf` | Dueño o ADMIN | ✅ | ✅ |
+| comprobantes | `GET /comprobantes/reporte?desde&hasta` | ADMIN | ✅ | ✅ |
 
 ### Formas de las respuestas
 

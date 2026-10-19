@@ -14,9 +14,9 @@
 El cliente web y Postman conocen **una sola URL**: la del gateway. El gateway:
 
 1. Recibe la petición.
-2. **Valida el JWT una sola vez** (pendiente, semana 3).
+2. **Valida el JWT** (firma y vencimiento) y bloquea las rutas internas.
 3. Mira el prefijo de la ruta y la reenvía al servicio correcto, preguntándole a Eureka dónde está.
-4. Propaga el usuario y el rol en cabeceras para que los servicios no tengan que volver a consultar a ms-auth.
+4. Deja pasar el token en `Authorization`: cada servicio lo vuelve a validar con `common-security`.
 
 ## Tabla de rutas (ya configurada en `application.yml`)
 
@@ -38,8 +38,8 @@ El cliente web y Postman conocen **una sola URL**: la del gateway. El gateway:
 | `filter/RequestLogFilter.java`: registra método y ruta de cada petición | ✅ |
 | `filter/JwtGatewayFilter.java`: contrato C4 | ✅ Rutas internas → 403 siempre; rutas públicas sin token; token inválido o vencido → 401; sin token → 401 solo si `EXIGIR_TOKEN=true` |
 | `filter/GatewaySeguridadProperties.java` | ✅ Lee `intiguard.jwt.secret` e `intiguard.security.*` (rutas públicas e internas en `application.yml`) |
-| Tests | ✅ `JwtGatewayFilterTest` (6 casos; incluye `GET /stock?ids=` público) |
-| CORS | En desarrollo no hace falta: la app React llama a `/api` y el proxy de Vite lo manda al gateway (un solo origen). Para la nube: pendiente (S3) |
+| Tests | ✅ `JwtGatewayFilterTest` (7 casos; incluye `GET /stock?ids=` público y el preflight CORS) |
+| CORS | ✅ `globalcors` con los orígenes de `CORS_ORIGENES` (separados por coma; por defecto `http://localhost:5173,http://localhost:4173`). En desarrollo no hace falta: el proxy de Vite hace que el navegador vea un solo origen. El preflight `OPTIONS` pasa sin token |
 
 El token **sigue viajando** en `Authorization` hasta el servicio, que lo vuelve a validar con `common-security`. No se agregan cabeceras `X-User`/`X-Rol`: cada servicio lee el usuario del token con `UsuarioActual`, y así las llamadas Feign entre servicios (que no pasan por el gateway) también quedan protegidas.
 
