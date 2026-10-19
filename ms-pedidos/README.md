@@ -86,22 +86,28 @@ Se decide en el checkout y se manda igual a ms-comprobantes.
 | Entity | `Carrito`, `ItemCarrito`, `Venta` (con `asignarMontos`), `DetalleVenta`, `EstadoVenta`, `TipoComprobante` | ✅ |
 | Repository | `CarritoRepository.findByIdUsuario`, `VentaRepository.findByIdUsuarioOrderByFechaVentaDesc` | ✅ con test `@DataJpaTest` (cascada venta→detalles y desglose del IGV) |
 | DTO / Mapper | `VentaResponse`, `VentaMapper` | ✅ |
-| Service / Controller | `GET /pedidos`, `GET /pedidos/{id}` | ✅ verificado por el gateway |
+| Service / Controller | `PedidoService`, `PedidoController` | ✅ |
 | Feign | `@EnableFeignClients`, `client/CatalogoClient` + `ProductoDto` (ejemplo listo) | ✅ base |
 | Dependencias | `spring-cloud-starter-openfeign`, `spring-cloud-starter-circuitbreaker-resilience4j` | ✅ en el pom |
-| Carrito, checkout, clientes de inventario y comprobantes | | ⬜ |
+| Carrito | `CarritoService` + `CarritoController` (solo CLIENTE, precio y datos vigentes desde ms-catalogo) | ✅ |
+| Checkout | `CheckoutService` (saga: PENDIENTE → reservar → comprobante con circuit breaker de 2 s → confirmar → CONFIRMADA; compensa liberando y anulando), `VentaRegistro` (pasos locales en su propia transacción) | ✅ |
+| Feign | `CatalogoClient`, `InventarioClient` (C6), `ComprobantesClient` (C7); el token del cliente se reenvía como parámetro | ✅ |
+| Resilience4j | `CircuitBreakerConfig`: TimeLimiter 2 s y circuito que se abre con 50 % de fallos en 10 llamadas | ✅ |
+| Consultas | `GET /pedidos` y `GET /pedidos/{id}` con `detalles` (`@EntityGraph`) y control de dueño | ✅ |
+| Tarea programada | `TareaVentasPendientes`: anula las ventas PENDIENTE de más de 15 min (CU09) | ✅ |
+| Tests | `PedidosIntegracionTest` (8, HTTP + H2 con los tres servicios simulados: éxito, sin stock, comprobantes caído y lento) | ✅ |
 
 ## Endpoints objetivo
 
 | Método | Ruta | Quién | Estado | Bloqueo |
 |---|---|---|---|---|
-| GET | `/carrito` | CLIENTE | ⬜ | 🔗 ms-catalogo |
-| POST | `/carrito/items` | CLIENTE | ⬜ | 🔗 ms-catalogo |
-| PUT | `/carrito/items/{idProducto}` | CLIENTE | ⬜ | 🔗 ms-catalogo |
-| DELETE | `/carrito/items/{idProducto}` | CLIENTE | ⬜ | 🔗 ms-catalogo |
-| POST | `/pedidos/checkout` | CLIENTE | ⬜ | 🔗 ms-catalogo, ms-inventario, ms-comprobantes |
-| GET | `/pedidos` | ADMIN: todas · CLIENTE: las suyas | 🟡 lista todas y sin `detalles` | 🟢 |
-| GET | `/pedidos/{id}` | Dueño o ADMIN | 🟡 sin control de dueño ni `detalles` | ⛔ bloquea el PDF de ms-comprobantes |
+| GET | `/carrito` | CLIENTE | ✅ | 🔗 ms-catalogo |
+| POST | `/carrito/items` | CLIENTE | ✅ | 🔗 ms-catalogo |
+| PUT | `/carrito/items/{idProducto}` | CLIENTE | ✅ | 🔗 ms-catalogo |
+| DELETE | `/carrito/items/{idProducto}` | CLIENTE | ✅ | 🔗 ms-catalogo |
+| POST | `/pedidos/checkout` | CLIENTE | ✅ | 🔗 ms-catalogo, ms-inventario, ms-comprobantes |
+| GET | `/pedidos` | ADMIN: todas · CLIENTE: las suyas | ✅ | 🟢 |
+| GET | `/pedidos/{id}` | Dueño o ADMIN | ✅ | ⛔ bloquea el PDF de ms-comprobantes |
 
 El detalle de cada uno está en "Contrato con el cliente web".
 
@@ -176,14 +182,14 @@ Vacío: `{ "items": [], "total": 0 }`.
 - El carrito es el del usuario del token (`usuarioActual.id()`), nunca un id del cuerpo.
 - **Mientras ms-catalogo no tenga `activo`:** arma el carrito con un `CatalogoClient` simulado en los tests (Mockito) y completa la validación de "producto activo" al final.
 
-### `GET /carrito` · CLIENTE · ⬜ · 🔗 ms-catalogo
+### `GET /carrito` · CLIENTE · ✅ · 🔗 ms-catalogo
 
 **Para qué:** ver el carrito y mostrar el número del ícono del carrito.
 **Vistas:** 4.6 Carrito · 4.7 Checkout · encabezado de la tienda (número del ícono).
 
 Responde **200**: `Carrito` (vacío si el cliente no tiene).
 
-### `POST /carrito/items` · CLIENTE · ⬜ · 🔗 ms-catalogo
+### `POST /carrito/items` · CLIENTE · ✅ · 🔗 ms-catalogo
 
 **Para qué:** el botón "Agregar al carrito".
 **Vistas:** 4.1 Inicio · 4.2 Catálogo · 4.3 Detalle de producto.
@@ -195,7 +201,7 @@ Responde **200**: `Carrito` (vacío si el cliente no tiene).
 
 Responde **201**: el `Carrito` completo. **400**. **404** si el producto no existe o está inactivo.
 
-### `PUT /carrito/items/{idProducto}` · CLIENTE · ⬜ · 🔗 ms-catalogo
+### `PUT /carrito/items/{idProducto}` · CLIENTE · ✅ · 🔗 ms-catalogo
 
 **Para qué:** el selector de cantidad del carrito.
 **Vistas:** 4.6 Carrito.
@@ -203,14 +209,14 @@ Responde **201**: el `Carrito` completo. **400**. **404** si el producto no exis
 Envía `{ "cantidad": Integer }`: **valor absoluto**, mayor que 0.
 Responde **200**: `Carrito`. **400**. **404** si el producto no está en el carrito.
 
-### `DELETE /carrito/items/{idProducto}` · CLIENTE · ⬜ · 🔗 ms-catalogo
+### `DELETE /carrito/items/{idProducto}` · CLIENTE · ✅ · 🔗 ms-catalogo
 
 **Para qué:** quitar un producto del carrito.
 **Vistas:** 4.6 Carrito.
 
 Responde **200**: el `Carrito` sin esa línea. Si el producto no estaba, no hace nada y responde igual.
 
-### `POST /pedidos/checkout` · CLIENTE · ⬜ · 🔗 ms-catalogo, ms-inventario, ms-comprobantes
+### `POST /pedidos/checkout` · CLIENTE · ✅ · 🔗 ms-catalogo, ms-inventario, ms-comprobantes
 
 **Para qué:** confirmar la compra del carrito con boleta o factura.
 **Vistas:** 4.7 Checkout · 4.8 Compra confirmada (si responde 201) · 4.9 Compra no completada (si responde 409 o 503).
@@ -229,23 +235,20 @@ Respuestas:
 - **409** `"Stock insuficiente para <nombre del producto>"` con `detalles: ["idProducto: 7"]`. **La web usa ese id** para mostrar el producto agotado en 4.9. La venta queda ANULADA. ms-inventario ya devuelve ese `detalles` en su 409: reenvíalo.
 - **503** `"El servicio de comprobantes no está disponible…"`: se libera la reserva y la venta queda ANULADA.
 
-**Mientras no estén inventario y comprobantes:** escribe `CheckoutService` y pruébalo con Mockito simulando los tres clientes Feign (ver "Cómo avanzar sin esperar").
 
-### `GET /pedidos` · Con sesión · 🟡 · 🟢
+### `GET /pedidos` · Con sesión · ✅ · 🟢
 
 **Para qué:** "Mis pedidos" del cliente, y las ventas, el resumen y los reportes del panel.
 **Vistas:** 4.10 Mis pedidos · 5.1 Resumen (ventas, gráficos y más vendidos) · 5.7 Ventas · 5.9 Reportes (ventas por día y más vendidos).
 
 Responde **200**: `List<Venta>` **con `detalles`**, de la más nueva a la más antigua. Un CLIENTE recibe **solo las suyas** (`usuarioActual.id()`); el ADMIN, todas.
-Falta: el filtro por dueño y los `detalles`. Para no hacer una consulta por venta, carga los detalles con `@EntityGraph(attributePaths = "detalles")`.
 
-### `GET /pedidos/{id}` · Dueño o ADMIN · 🟡 · ⛔ bloquea el PDF de ms-comprobantes
+### `GET /pedidos/{id}` · Dueño o ADMIN · ✅ · ⛔ bloquea el PDF de ms-comprobantes
 
 **Para qué:** el detalle de un pedido, y los productos que se imprimen en el comprobante.
 **Vistas:** 4.8 Compra confirmada · 4.11 Detalle de mi pedido · 4.12 Comprobante imprimible (productos del documento) · detalle de venta del panel · 5.8 Comprobantes (vista previa).
 
 Responde **200**: `Venta` con `detalles`. **403** si es de otro cliente. **404**.
-Falta: el control de dueño y los `detalles`. ms-comprobantes lo llama (con el token del cliente) para armar el PDF con los productos de la venta.
 
 ## Dependencias con otros servicios
 

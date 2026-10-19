@@ -21,6 +21,20 @@ spring:
       # El schema lo crea infra/scripts/init-aiven.sh; Hibernate solo valida que coincida
       ddl-auto: validate
     open-in-view: false
+  cloud:
+    openfeign:
+      client:
+        config:
+          ms-catalogo:
+            connect-timeout: 2000
+            read-timeout: 2000
+          ms-inventario:
+            connect-timeout: 2000
+            read-timeout: 3000
+          # El circuit breaker corta a los 2 s; el read-timeout es la red de seguridad
+          ms-comprobantes:
+            connect-timeout: 2000
+            read-timeout: 2500
 
 intiguard:
   jwt:
@@ -30,6 +44,11 @@ intiguard:
     # false mientras no exista el login (C3): el token se usa si llega, pero no es obligatorio
     exigir-token: ${EXIGIR_TOKEN:false}
     rutas-publicas: []   # todo exige token
+  checkout:
+    # Paso 5: si ms-comprobantes no responde en este tiempo, se compensa (circuit breaker)
+    timeout-comprobante-ms: 2000
+    # CU09: una venta PENDIENTE por más tiempo que esto se anula (la reserva ya venció)
+    minutos-pendiente: 15
 
 eureka:
   client:
