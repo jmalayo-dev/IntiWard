@@ -78,7 +78,7 @@ No hay que tocarlas, salvo que algo cambie. Están en el grupo **`intiguard-comu
 | `MS_AUTH_URL` … `MS_COMPROBANTES_URL` | `https://intiguard-*.onrender.com` | A dónde enruta el gateway y a dónde llama cada cliente Feign |
 | `CORS_ORIGENES` | `https://intiguard-web.onrender.com,http://localhost:5173` | Dominios que pueden llamar al gateway desde el navegador |
 | `FEIGN_CONNECT_TIMEOUT_MS` · `FEIGN_READ_TIMEOUT_MS` | `10000` · `70000` | Un servicio dormido tarda ~1 min en despertar: las llamadas entre servicios lo esperan |
-| `JAVA_OPTS` | `-Xmx256m …` | Memoria de la JVM para caber en 512 MB |
+| `JAVA_OPTS` | `-Xmx256m … -Duser.timezone=America/Lima` | Memoria de la JVM para caber en 512 MB, y hora de Lima (Render corre en UTC) |
 
 Y en cada servicio: `PORT` (el de siempre: 8080 a 8085), `DB_NAME` y `DB_USER`.
 
