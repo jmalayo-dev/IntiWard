@@ -58,8 +58,7 @@ public class AuthService {
                 throw new CuentaBloqueadaException();
             }
             // El bloqueo ya venció: se empieza de cero
-            usuario.setBloqueadoHasta(null);
-            usuario.setIntentosFallidos(0);
+            usuario.levantarBloqueo();
         }
 
         if (!usuario.isActivo()) {
@@ -78,6 +77,7 @@ public class AuthService {
         }
 
         usuario.setIntentosFallidos(0);
+        usuario.setUltimoAcceso(ahora);
         String rol = usuario.getRol().getNombre();
         String token = jwtService.generarToken(usuario.getId(), usuario.getCorreo(), rol);
         log.info("Login correcto: {} ({})", usuario.getCorreo(), rol);

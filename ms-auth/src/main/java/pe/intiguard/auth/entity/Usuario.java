@@ -54,6 +54,9 @@ public class Usuario {
 
     private LocalDateTime bloqueadoHasta;
 
+    /** Fecha del último login correcto. */
+    private LocalDateTime ultimoAcceso;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean activo = true;
@@ -64,4 +67,10 @@ public class Usuario {
 
     @UpdateTimestamp
     private LocalDateTime actualizadoEn;
+
+    /** Quita el bloqueo por intentos fallidos (al reactivar la cuenta o cuando el bloqueo vence). */
+    public void levantarBloqueo() {
+        this.bloqueadoHasta = null;
+        this.intentosFallidos = 0;
+    }
 }

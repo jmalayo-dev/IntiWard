@@ -30,6 +30,10 @@ public class Comprobante {
     @Column(nullable = false, unique = true)
     private Long idVenta;
 
+    /** Dueño de la venta (id en ms-auth). Lo manda ms-pedidos; sirve para el control de dueño y no sale en la respuesta. */
+    @Column(nullable = false)
+    private Long idUsuario;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TipoComprobante tipo;
@@ -61,7 +65,7 @@ public class Comprobante {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
-    /** URL del PDF en S3 (semana 5). */
+    /** Vacía: el PDF se genera al pedirlo en GET /comprobantes/{id}/pdf. */
     @Column(length = 255)
     private String pdfUrl;
 
