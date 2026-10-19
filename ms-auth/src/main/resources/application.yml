@@ -32,6 +32,8 @@ intiguard:
     rutas-publicas:
       - POST /auth/login
       - POST /auth/registro
+    # Render: clave compartida para las rutas internas (cabecera X-Clave-Interna). Vacía en local
+    clave-interna: ${CLAVE_INTERNA:}
   # Administrador inicial: lo crea AdminInicializador si no existe. Sin correo o clave en .env, no lo crea.
   admin:
     correo: ${ADMIN_CORREO:}
@@ -41,6 +43,8 @@ intiguard:
 
 eureka:
   client:
+    # false en Render: los servicios se llaman por URL fija (intiguard.servicios.*), no por Eureka
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:

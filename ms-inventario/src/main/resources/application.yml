@@ -26,8 +26,8 @@ spring:
       client:
         config:
           ms-catalogo:
-            connect-timeout: 2000
-            read-timeout: 2000
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:2000}
 
 intiguard:
   jwt:
@@ -39,12 +39,23 @@ intiguard:
     rutas-publicas:
       - GET /stock
       - GET /stock/*
+    # Render: clave compartida para las rutas internas (cabecera X-Clave-Interna). Vacía en local
+    clave-interna: ${CLAVE_INTERNA:}
+    rutas-internas:
+      - POST /stock/reservar
+      - POST /stock/confirmar
+      - POST /stock/liberar
+  # URL fija de cada servicio que se llama por Feign. Vacía = se busca en Eureka (modo local)
+  servicios:
+    catalogo: ${MS_CATALOGO_URL:}
   # Minutos que dura una reserva antes de que la tarea de vencimiento la libere (CU09)
   reserva:
     minutos: 15
 
 eureka:
   client:
+    # false en Render: los servicios se llaman por URL fija (intiguard.servicios.*), no por Eureka
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:

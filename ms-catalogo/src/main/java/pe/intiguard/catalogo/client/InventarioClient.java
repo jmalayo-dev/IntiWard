@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import java.util.List;
 
 /** ms-inventario por Eureka. GET /stock es público: devuelve todas las filas de stock. */
-@FeignClient(name = "ms-inventario")
+@FeignClient(name = "ms-inventario", url = "${intiguard.servicios.inventario:}")
 public interface InventarioClient {
 
     @GetMapping("/stock")

@@ -13,7 +13,7 @@ import java.util.List;
  * Contrato C6 con ms-inventario. El token del cliente se pasa como parámetro (no con un interceptor)
  * para que siga llegando aunque la llamada corra en otro hilo.
  */
-@FeignClient(name = "ms-inventario")
+@FeignClient(name = "ms-inventario", url = "${intiguard.servicios.inventario:}")
 public interface InventarioClient {
 
     /** 200 · 409 con detalles ["idProducto: 7"] si algo no alcanza (todo o nada). */

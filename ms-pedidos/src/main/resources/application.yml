@@ -30,15 +30,15 @@ spring:
       client:
         config:
           ms-catalogo:
-            connect-timeout: 2000
-            read-timeout: 2000
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:2000}
           ms-inventario:
-            connect-timeout: 2000
-            read-timeout: 3000
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:3000}
           # El circuit breaker corta a los 2 s; el read-timeout es la red de seguridad
           ms-comprobantes:
-            connect-timeout: 2000
-            read-timeout: 2500
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:2500}
 
 intiguard:
   jwt:
@@ -48,9 +48,16 @@ intiguard:
     # false mientras no exista el login (C3): el token se usa si llega, pero no es obligatorio
     exigir-token: ${EXIGIR_TOKEN:false}
     rutas-publicas: []   # todo exige token
+    # Render: clave compartida para las rutas internas (cabecera X-Clave-Interna). Vacía en local
+    clave-interna: ${CLAVE_INTERNA:}
+  # URL fija de cada servicio que se llama por Feign. Vacía = se busca en Eureka (modo local)
+  servicios:
+    catalogo: ${MS_CATALOGO_URL:}
+    inventario: ${MS_INVENTARIO_URL:}
+    comprobantes: ${MS_COMPROBANTES_URL:}
   checkout:
     # Paso 5: si ms-comprobantes no responde en este tiempo, se compensa (circuit breaker)
-    timeout-comprobante-ms: 2000
+    timeout-comprobante-ms: ${CHECKOUT_TIMEOUT_COMPROBANTE_MS:2000}
     # CU09: una venta PENDIENTE por más tiempo que esto se anula (la reserva ya venció)
     minutos-pendiente: 15
 
@@ -71,6 +78,8 @@ resilience4j:
 
 eureka:
   client:
+    # false en Render: los servicios se llaman por URL fija (intiguard.servicios.*), no por Eureka
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:

@@ -70,6 +70,7 @@ public class IntiGuardSecurityAutoConfiguration {
             .formLogin(form -> form.disable())
             .exceptionHandling(e -> e.authenticationEntryPoint(respuestaError).accessDeniedHandler(respuestaError))
             .addFilterBefore(new JwtAuthFilter(jwtService, respuestaError), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new ClaveInternaFilter(seguridad, respuestaError), JwtAuthFilter.class)
             .authorizeHttpRequests(auth -> {
                 auth.requestMatchers(SIEMPRE_PUBLICAS).permitAll();
                 for (String regla : seguridad.getRutasPublicas()) {

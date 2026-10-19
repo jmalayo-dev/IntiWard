@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import java.math.BigDecimal;
 
 /** Contrato C7 con ms-comprobantes: idempotente por idVenta, debe responder en menos de 2 s. */
-@FeignClient(name = "ms-comprobantes")
+@FeignClient(name = "ms-comprobantes", url = "${intiguard.servicios.comprobantes:}")
 public interface ComprobantesClient {
 
     @PostMapping("/comprobantes")

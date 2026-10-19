@@ -31,4 +31,10 @@ public class SeguridadProperties {
 
     /** "METODO /ruta/**" o "/ruta/**" (cualquier método). /actuator/health y /error siempre son públicas. */
     private List<String> rutasPublicas = new ArrayList<>();
+
+    /** Rutas que solo llama otro servicio ("METODO /ruta"). Con clave-interna, exigen la cabecera X-Clave-Interna. */
+    private List<String> rutasInternas = new ArrayList<>();
+
+    /** Clave compartida entre servicios (CLAVE_INTERNA). Vacía = sin control (modo local). */
+    private String claveInterna;
 }
