@@ -61,6 +61,11 @@ class JwtGatewayFilterTest {
     }
 
     @Test
+    void elPreflightCorsPasaSinToken() {
+        assertThat(ejecutar(conTokenObligatorio, MockServerHttpRequest.options("/pedidos").build())).isNull();
+    }
+
+    @Test
     void rutaPublicaPasaSinToken() {
         assertThat(ejecutar(conTokenObligatorio, MockServerHttpRequest.get("/productos/3").build())).isNull();
         assertThat(ejecutar(conTokenObligatorio, MockServerHttpRequest.get("/stock/3").build())).isNull();
