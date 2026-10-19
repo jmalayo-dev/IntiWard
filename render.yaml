@@ -48,7 +48,7 @@ services:
     name: intiguard-gateway
     runtime: docker
     plan: free
-    region: oregon
+    region: virginia
     branch: main
     dockerfilePath: ./ms-gateway/Dockerfile
     dockerContext: .
@@ -64,7 +64,7 @@ services:
     name: intiguard-auth
     runtime: docker
     plan: free
-    region: oregon
+    region: virginia
     branch: main
     dockerfilePath: ./ms-auth/Dockerfile
     dockerContext: .
@@ -95,7 +95,7 @@ services:
     name: intiguard-catalogo
     runtime: docker
     plan: free
-    region: oregon
+    region: virginia
     branch: main
     dockerfilePath: ./ms-catalogo/Dockerfile
     dockerContext: .
@@ -121,7 +121,7 @@ services:
     name: intiguard-inventario
     runtime: docker
     plan: free
-    region: oregon
+    region: virginia
     branch: main
     dockerfilePath: ./ms-inventario/Dockerfile
     dockerContext: .
@@ -147,7 +147,7 @@ services:
     name: intiguard-pedidos
     runtime: docker
     plan: free
-    region: oregon
+    region: virginia
     branch: main
     dockerfilePath: ./ms-pedidos/Dockerfile
     dockerContext: .
@@ -173,7 +173,7 @@ services:
     name: intiguard-comprobantes
     runtime: docker
     plan: free
-    region: oregon
+    region: virginia
     branch: main
     dockerfilePath: ./ms-comprobantes/Dockerfile
     dockerContext: .

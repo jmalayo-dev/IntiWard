@@ -39,9 +39,10 @@ El Blueprint despliega la rama **`main`**. Antes de empezar, `develop` tiene que
 ## Paso 1 · Región y Aiven
 
 1. En la consola de Aiven, mira en qué **región** está el servicio MySQL (por ejemplo `google-us-east1` o `aws-us-east-1`).
-2. En `render.yaml`, cambia `region: oregon` en los 6 servicios por la región de Render más cercana:
-   `oregon`, `ohio`, `virginia` (este de EE. UU.), `frankfurt` o `singapore`. **La región no se puede cambiar después.**
-   Cada consulta cruza a Aiven, así que la cercanía se nota en el checkout.
+2. `render.yaml` ya usa `region: virginia`: la base de Aiven está en DigitalOcean, Nueva York/Nueva Jersey (este de EE. UU.).
+   Si algún día mueves la base, cambia la región de los 6 servicios (`oregon`, `ohio`, `virginia`, `frankfurt` o
+   `singapore`) antes de crearlos. **La región no se puede cambiar después.** Cada consulta cruza a Aiven, así que la
+   cercanía se nota en el checkout.
 3. En Aiven → tu servicio MySQL → **Allowed IP addresses**: si no está abierto (`0.0.0.0/0`), agrega las IP de salida de
    Render (Dashboard de Render → cualquier servicio → **Connect → Outbound**).
 
