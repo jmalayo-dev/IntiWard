@@ -105,21 +105,24 @@ Si `stock` dice 7 y 0, cuadra. Una fila donde lo actual no coincide con lo esper
 |---|---|---|
 | Entity | `Stock` (PK = `idProducto`), `Reserva` + `EstadoReserva`, `MovimientoStock` + `TipoMovimiento` | ✅ |
 | Repository | `StockRepository.findById(idProducto)`, `ReservaRepository.findByIdVenta/findByEstadoAndExpiraEnBefore`, `MovimientoStockRepository.findByIdProductoOrderByCreadoEnDesc` | ✅ con test `@DataJpaTest` |
-| DTO / Mapper | `StockResponse(idProducto, disponible, reservado)`, `StockMapper` | ✅ |
-| Service / Controller | `GET /stock/{idProducto}` | ✅ verificado por el gateway |
+| DTO / Mapper | `StockResponse` (con `actualizadoEn`), `MovimientoResponse`, `EntradaRequest`, `AjusteRequest`, `ReservarRequest`, `VentaRequest`, `StockMapper` | ✅ |
+| Service | `StockService`: stock en 0 sin fila, entrada y ajuste con su movimiento, reservar todo o nada con `SELECT ... FOR UPDATE` ordenado, confirmar y liberar idempotentes | ✅ |
+| Controller | `StockController` (`GET /stock`, `GET /stock/{id}`, entrada, ajuste y los tres internos), `MovimientoController` | ✅ con `InventarioIntegracionTest` (6, HTTP + H2) |
+| Tarea programada | `TareaVencimientoReservas`: cada minuto libera las reservas vencidas (CU09, `intiguard.reserva.minutos`) | ✅ |
+| Feign | `CatalogoClient`: valida que el producto exista antes de crear su fila de stock | ✅ |
 
 ## Endpoints objetivo
 
 | Método | Ruta | Quién | Estado | Bloqueo |
 |---|---|---|---|---|
-| GET | `/stock/{idProducto}` | Público | 🟡 falta `actualizadoEn` y responder 0 sin fila | 🟢 |
-| GET | `/stock?ids=1,2,3` | Público | ⬜ nuevo | ⛔ bloquea el filtro `conStock` de ms-catalogo |
-| POST | `/stock/entrada` | ADMIN | ⬜ | 🔗 ms-catalogo |
-| PUT | `/stock/{idProducto}` | ADMIN (ajuste) | ⬜ | 🔗 ms-catalogo |
-| GET | `/movimientos?idProducto=` | ADMIN | ⬜ | 🟢 |
-| POST | `/stock/reservar` | Interno (ms-pedidos) | ⬜ | ⛔ bloquea el checkout de ms-pedidos |
-| POST | `/stock/confirmar` | Interno (ms-pedidos) | ⬜ | ⛔ bloquea el checkout de ms-pedidos |
-| POST | `/stock/liberar` | Interno (ms-pedidos) | ⬜ | ⛔ bloquea el checkout de ms-pedidos |
+| GET | `/stock/{idProducto}` | Público | ✅ | 🟢 |
+| GET | `/stock?ids=1,2,3` | Público | ✅ | ⛔ bloquea el filtro `conStock` de ms-catalogo |
+| POST | `/stock/entrada` | ADMIN | ✅ | 🔗 ms-catalogo |
+| PUT | `/stock/{idProducto}` | ADMIN (ajuste) | ✅ | 🔗 ms-catalogo |
+| GET | `/movimientos?idProducto=` | ADMIN | ✅ | 🟢 |
+| POST | `/stock/reservar` | Interno (ms-pedidos) | ✅ | ⛔ bloquea el checkout de ms-pedidos |
+| POST | `/stock/confirmar` | Interno (ms-pedidos) | ✅ | ⛔ bloquea el checkout de ms-pedidos |
+| POST | `/stock/liberar` | Interno (ms-pedidos) | ✅ | ⛔ bloquea el checkout de ms-pedidos |
 
 Los cuerpos y las respuestas de reservar, confirmar y liberar están en el contrato **C6** (sección "Dependencias con otros servicios"). El resto está en "Contrato con el cliente web".
 
@@ -174,15 +177,14 @@ La web muestra "Agotado" con 0 unidades y "Pocas unidades" con 5 o menos, deshab
 - La primera ENTRADA o el primer ajuste crea la fila (antes se valida que el producto exista en catálogo).
 - Reservar un producto sin fila responde 409, igual que si no alcanzara.
 
-### `GET /stock/{idProducto}` · Público · 🟡 · 🟢
+### `GET /stock/{idProducto}` · Público · ✅ · 🟢
 
 **Para qué:** la disponibilidad de un producto y el tope del selector de cantidad del detalle.
 **Vistas:** 4.3 Detalle de producto.
 
 Responde **200**: `Stock`. Si el producto aún no tiene entradas, **200 con todo en 0** (`actualizadoEn: null`), no 404.
-Falta: `actualizadoEn` y la respuesta en 0.
 
-### `GET /stock?ids=1,2,3` · Público · ⬜ nuevo · ⛔ bloquea ms-catalogo
+### `GET /stock?ids=1,2,3` · Público · ✅ · ⛔ bloquea ms-catalogo
 
 **Para qué:** pedir el stock de toda una grilla en **una sola llamada**, en vez de una por tarjeta. **Sin `ids` devuelve todos** (tabla de stock y campana de agotados).
 **Vistas:** 4.1 Inicio, 4.2 Catálogo y 4.3 Detalle (insignias de la grilla) · 4.6 Carrito y 4.7 Checkout (aviso de stock insuficiente) · 5.1 Resumen · 5.2 Productos · 5.5 Stock · campana de agotados del panel (sin `ids`).
@@ -197,7 +199,7 @@ Responde **200**: `List<Stock>` con **una entrada por cada id pedido** (en 0 si 
 
 ms-catalogo lo necesita para su filtro `conStock`.
 
-### `POST /stock/entrada` · ADMIN · ⬜ · 🔗 ms-catalogo
+### `POST /stock/entrada` · ADMIN · ✅ · 🔗 ms-catalogo
 
 **Para qué:** registrar mercadería que llegó del proveedor.
 **Vistas:** 5.5 Stock (ventana "Registrar entrada").
@@ -212,7 +214,7 @@ Responde **200**: `Stock` actualizado. Registra un movimiento `ENTRADA`. Si el p
 
 Para validar el producto se llama a ms-catalogo `GET /productos/{id}` (contrato C5, de César). **Mientras no esté:** haz la entrada sin validar y agrega la validación al final.
 
-### `PUT /stock/{idProducto}` · ADMIN · ⬜ · 🔗 ms-catalogo
+### `PUT /stock/{idProducto}` · ADMIN · ✅ · 🔗 ms-catalogo
 
 **Para qué:** corregir el stock después de un conteo físico (rotura, pérdida, error de carga).
 **Vistas:** 5.5 Stock (ventana "Ajustar").
@@ -226,7 +228,7 @@ Responde **200**: `Stock`. Registra un `AJUSTE` con la **diferencia con signo** 
 
 Cuidado: si el valor nuevo es igual al actual, **no registres movimiento**: la base rechaza un movimiento con cantidad 0 (`ck_movimiento_cantidad`).
 
-### `GET /movimientos` · ADMIN · ⬜ · 🟢
+### `GET /movimientos` · ADMIN · ✅ · 🟢
 
 **Para qué:** el historial auditable de todo lo que le pasó al stock.
 **Vistas:** 5.6 Movimientos.
@@ -237,7 +239,7 @@ Cuidado: si el valor nuevo es igual al actual, **no registres movimiento**: la b
 
 Responde **200**: `List<Movimiento>`, **del más reciente al más antiguo**.
 
-### `POST /stock/reservar` · `/confirmar` · `/liberar` · Internos · ⬜ · ⛔ bloquean ms-pedidos
+### `POST /stock/reservar` · `/confirmar` · `/liberar` · Internos · ✅ · ⛔ bloquean ms-pedidos
 
 **Para qué:** apartar, vender o devolver las unidades durante el checkout. La web **nunca** los llama (el gateway responde 403 desde afuera), pero sin ellos no hay compra.
 **Vistas (indirectas):** 4.7 Checkout · 4.8 Compra confirmada · 4.9 Compra no completada.

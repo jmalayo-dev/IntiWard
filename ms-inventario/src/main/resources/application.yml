@@ -21,6 +21,13 @@ spring:
       # El schema lo crea infra/scripts/init-aiven.sh; Hibernate solo valida que coincida
       ddl-auto: validate
     open-in-view: false
+  cloud:
+    openfeign:
+      client:
+        config:
+          ms-catalogo:
+            connect-timeout: 2000
+            read-timeout: 2000
 
 intiguard:
   jwt:
@@ -30,7 +37,11 @@ intiguard:
     # false mientras no exista el login (C3): el token se usa si llega, pero no es obligatorio
     exigir-token: ${EXIGIR_TOKEN:false}
     rutas-publicas:
+      - GET /stock
       - GET /stock/*
+  # Minutos que dura una reserva antes de que la tarea de vencimiento la libere (CU09)
+  reserva:
+    minutos: 15
 
 eureka:
   client:

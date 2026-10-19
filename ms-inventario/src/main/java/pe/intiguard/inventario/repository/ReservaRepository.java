@@ -11,6 +11,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
     List<Reserva> findByIdVenta(Long idVenta);
 
+    List<Reserva> findByIdVentaAndEstado(Long idVenta, EstadoReserva estado);
+
     /** Para la tarea de vencimiento: usa el índice ix_reserva_vencimiento (estado, expira_en). */
     List<Reserva> findByEstadoAndExpiraEnBefore(EstadoReserva estado, LocalDateTime limite);
 }
