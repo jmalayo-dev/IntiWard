@@ -21,6 +21,14 @@ spring:
       # El schema lo crea infra/scripts/init-aiven.sh; Hibernate solo valida que coincida
       ddl-auto: validate
     open-in-view: false
+  cloud:
+    openfeign:
+      client:
+        config:
+          # Filtro conStock: si inventario no responde en 2 s, se responde 503
+          ms-inventario:
+            connect-timeout: 2000
+            read-timeout: 2000
 
 intiguard:
   jwt:

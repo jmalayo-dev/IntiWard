@@ -2,11 +2,14 @@ package pe.intiguard.catalogo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Datos comerciales del producto. La cantidad en stock NO vive aquí:
@@ -58,4 +61,11 @@ public class Producto {
 
     @UpdateTimestamp
     private LocalDateTime actualizadoEn;
+
+    /** Se cargan por lotes al armar una página: una consulta para todos los productos, no una por producto. */
+    @Builder.Default
+    @BatchSize(size = 100)
+    @OrderBy("orden ASC")
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductoEspecificacion> especificaciones = new ArrayList<>();
 }
