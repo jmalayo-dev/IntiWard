@@ -278,30 +278,32 @@ ms-pedidos es el servicio que **más depende de otros**. El mapa completo está 
 
 ## Pendientes por semana
 
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
 ### Semana 2–3
-- [ ] `CarritoService` + `CarritoController` (`/carrito/items`), con validaciones `@Positive cantidad`.
-- [ ] Obtener el usuario con `usuarioActual.id()` (de `common-security`, ya disponible). Para probar sin login: `./infra/scripts/token-dev.sh 7 CLIENTE`.
+- [x] `CarritoService` + `CarritoController` (`/carrito/items`), con validaciones `@Positive cantidad`.
+- [x] Obtener el usuario con `usuarioActual.id()` (de `common-security`, ya disponible). Para probar sin login: `./infra/scripts/token-dev.sh 7 CLIENTE`.
 
 ### Semana 4 · Checkout de punta a punta (entrega bisagra)
-- [ ] `client/InventarioClient` (`reservar`, `confirmar`, `liberar`) y `client/ComprobantesClient` (`emitir`). Acordar los DTO con Arévalo y Galarza.
-- [ ] `CheckoutService.checkout()` con los pasos 1–7.
-- [ ] Una compra completa desde Postman a través del gateway.
+- [x] `client/InventarioClient` (`reservar`, `confirmar`, `liberar`) y `client/ComprobantesClient` (`emitir`). Acordar los DTO con Arévalo y Galarza.
+- [x] `CheckoutService.checkout()` con los pasos 1–7.
+- [x] Una compra completa a través del gateway (con `pruebas/prueba-e2e.py`, no con Postman).
 
 ### Semana 5 · Falla bien
-- [ ] Circuit breaker en `ComprobantesClient`. En `application.yml`:
+- [x] Circuit breaker en `ComprobantesClient`. En `application.yml`:
   ```yaml
   spring.cloud.openfeign.circuitbreaker.enabled: true
   resilience4j.timelimiter.instances.ms-comprobantes.timeout-duration: 2s
   ```
   y un `fallback`/`fallbackFactory` que dispare la compensación.
-- [ ] Compensación: liberar stock y marcar la venta ANULADA. Probar apagando el contenedor: `docker compose stop ms-comprobantes`.
+- [x] Compensación: liberar stock y marcar la venta ANULADA. Probar apagando el contenedor: `docker compose stop ms-comprobantes`.
 
 ### Semana 6 · Pantallas web
-- [ ] `/carrito`, `/checkout`, `/mis-pedidos`, `/admin/ventas` en `web-client`.
+- ~~`/carrito`, `/checkout`, `/mis-pedidos`, `/admin/ventas` en `web-client`.~~ → no se hizo: la web es la app React de `DSW_II_PROYECTO_WEB`.
 
 ### Semana 7 · Pruebas
-- [ ] Tests de `CheckoutService` con Mockito, mockeando los 3 clientes Feign: camino feliz, sin stock, comprobante falla → se llama `liberar`.
-- [ ] `postman/ms-pedidos.postman_collection.json` + `postman/flujo-completo.postman_collection.json` (login → carrito → checkout → comprobante).
+- ~~Tests de `CheckoutService` con Mockito, mockeando los 3 clientes Feign: camino feliz, sin stock, comprobante falla → se llama `liberar`.~~ → cubierto con `PedidosIntegracionTest` (clientes Feign simulados) y `CircuitoComprobantesTest`.
+- ~~`postman/ms-pedidos.postman_collection.json` + `postman/flujo-completo.postman_collection.json` (login → carrito → checkout → comprobante).~~ → no se hizo: hay `IntiGuard-smoke` e `IntiGuard-seguridad`; el flujo completo se prueba con `pruebas/prueba-e2e.py`.
 
 ## Reglas de diseño
 

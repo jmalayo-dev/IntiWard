@@ -1,5 +1,7 @@
 # web-client · Cliente web (Thymeleaf)
 
+> **Sin terminar y en desuso (19/10/2026).** La web de IntiGuard es la app React del repositorio `DSW_II_PROYECTO_WEB`, publicada en https://intiward-web.onrender.com. Este módulo queda solo como registro.
+
 | | |
 |---|---|
 | **Responsable del layout** | Integrante 1 (layout base, menú, sesión) |

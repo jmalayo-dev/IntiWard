@@ -95,7 +95,9 @@ Cuando el login (C3) esté listo, se pasa `EXIGIR_TOKEN=true` para todos y **se 
 
 ## Pendientes
 
-- [ ] El login (C3) ya existe. Cuando exista también el registro de clientes: pasar `EXIGIR_TOKEN=true` en los `.env` del equipo y en `docker-compose.yml`, y avisar al equipo.
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
+- ~~El login (C3) ya existe. Cuando exista también el registro de clientes: pasar `EXIGIR_TOKEN=true` en los `.env` del equipo y en `docker-compose.yml`, y avisar al equipo.~~ → en Render el perfil `cloud` exige el token siempre; en local sigue en `false`.
 
 ## Probar
 

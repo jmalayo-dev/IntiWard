@@ -2,6 +2,25 @@
 
 Guía para que cualquier integrante deje su microservicio funcionando, **paso a paso y sin saltarse nada**. Está escrita para **Windows + IntelliJ IDEA**. Si algo no coincide con lo que ves en tu pantalla, ve a la sección [12. Problemas típicos](#12-problemas-típicos).
 
+> **Proyecto concluido (19/10/2026).** Esta guía queda para volver a correrlo en una máquina. Las secciones de reparto entre integrantes (1, 10 y 11) son el registro de cómo se trabajó. Para levantar **todo el sistema** en local, ve directo a [Sistema completo en local](#sistema-completo-en-local). La versión publicada está en Render: [`docs/DESPLIEGUE_RENDER.md`](docs/DESPLIEGUE_RENDER.md).
+
+## Sistema completo en local
+
+1. `.env` en la raíz, con `AIVEN_HOST`, `AIVEN_PORT`, las cinco `DB_PASS_*` y `JWT_SECRET=clave-local-solo-para-desarrollo-no-usar-en-nube` (32 caracteres o más: con menos, **ningún servicio arranca**). `ADMIN_CORREO` y `ADMIN_CLAVE` son opcionales: el administrador ya existe en Aiven y sirve el mismo de Render.
+2. Backend:
+
+   ```bash
+   docker compose up -d --build ms-discovery ms-gateway ms-auth ms-catalogo ms-inventario ms-pedidos ms-comprobantes
+   docker compose ps                              # los 7 en "healthy" (1–2 min)
+   curl http://localhost:8080/actuator/health     # {"status":"UP"}
+   ```
+
+   No hace falta `web-client` (el cliente Thymeleaf viejo).
+3. Web, en el repositorio `DSW_II_PROYECTO_WEB`: `npm install` (la primera vez) y `npm run dev` → http://localhost:5173. Vite manda `/api` al gateway local.
+4. Al terminar: `docker compose down`.
+
+La base es la misma de Aiven para local y para Render: lo que compres o cambies en local aparece también en la web publicada.
+
 ---
 
 ## 1° Paso
@@ -499,8 +518,10 @@ Cada servicio es de una persona, pero varios necesitan endpoints de otros para a
 
 **Los dos caminos críticos:**
 
-1. **Seguridad:** C1 a C4 están listos. Falta el **registro de clientes** (autenticación) para que haya usuarios además del admin; mientras tanto el sistema corre con `EXIGIR_TOKEN=false` (ver la sección 11).
-2. **Checkout:** C5 + C6 + C7 → checkout de pedidos en la **semana 4**, la semana bisagra del cronograma. Si C6 o C7 se atrasan, se atrasa todo.
+1. **Seguridad:** C1 a C4 listos, y el registro de clientes también. En local se sigue con `EXIGIR_TOKEN=false`; en Render (perfil `cloud`) el token es obligatorio.
+2. **Checkout:** C5 + C6 + C7 + C8 listos: el checkout funciona de punta a punta, con compensación si falla el comprobante.
+
+Todos los contratos están ✅ (19/10/2026).
 
 **Si vas a cambiar algo de un contrato** (un nombre de campo, un código HTTP, una ruta): avisa por el grupo, actualiza el README y espera el visto bueno de quien lo consume.
 
@@ -509,6 +530,8 @@ Cada servicio es de una persona, pero varios necesitan endpoints de otros para a
 
 
 ## 11. Cómo avanzar mientras esperas una dependencia
+
+> Registro histórico: ya no hay dependencias pendientes. Lo útil de esta sección hoy son los tokens de Postman.
 
 **Tokens para probar endpoints protegidos.** Hoy el `.env` trae `EXIGIR_TOKEN=false`: tus endpoints responden **sin token**. Si mandas uno, se valida y `UsuarioActual` sabe quién eres. Para conseguir un token sin depender de nadie:
 

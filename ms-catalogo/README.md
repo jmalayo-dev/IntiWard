@@ -254,28 +254,30 @@ Las rutas `/marcas/**` y `/categorias/**` ya están en el gateway, y sus `GET` y
 
 ## Pendientes por semana
 
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
 ### Semana 2–3
-- [ ] `ProductoRequest` con validaciones: `@NotBlank nombre`, `@NotNull @DecimalMin("0.01") precio`, `@NotNull idMarca`, `@NotNull idCategoria`.
-- [ ] `POST`, `PUT`, `DELETE` (borrado lógico). Validar que la marca y la categoría existan → 400 con `detalles` (`"idMarca: no existe"`).
-- [ ] `GET /marcas` y `GET /categorias` (para los combos del formulario web).
-- [ ] Paginación: `Pageable` + `Page<ProductoResponse>`. Para que el JSON salga estable, agregar `@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)`.
-- [ ] Filtros: por categoría, marca y texto (`findByNombreContainingIgnoreCase` o `@Query`).
-- [ ] `@PreAuthorize("hasRole('ADMIN')")` en los métodos de escritura (cuando `common-security` esté lista).
+- [x] `ProductoRequest` con validaciones: `@NotBlank nombre`, `@NotNull @DecimalMin("0.01") precio`, `@NotNull idMarca`, `@NotNull idCategoria`.
+- [x] `POST`, `PUT`, `DELETE` (borrado lógico). Validar que la marca y la categoría existan → 400 con `detalles` (`"idMarca: no existe"`).
+- [x] `GET /marcas` y `GET /categorias` (para los combos del formulario web).
+- [x] Paginación: `Pageable` + `Page<ProductoResponse>`. Para que el JSON salga estable, agregar `@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)`.
+- [x] Filtros: por categoría, marca y texto (`findByNombreContainingIgnoreCase` o `@Query`).
+- [x] `@PreAuthorize("hasRole('ADMIN')")` en los métodos de escritura (cuando `common-security` esté lista).
 
 ### Semana 5 · Datos semilla
-- [ ] Completar `infra/mysql/inserts-test/02-catalogo.sql` hasta **200 productos** (el alcance del informe). Coordinar con Arévalo (inventario): cada producto necesita su stock (`inserts-test/03-inventario.sql` lo genera para todos los productos).
-- [ ] La base en Aiven es compartida: los productos nuevos los carga Mathias en Aiven al mergear el PR.
+- [x] Completar `infra/mysql/inserts-test/02-catalogo.sql` hasta **200 productos** (el alcance del informe). Coordinar con Arévalo (inventario): cada producto necesita su stock (`inserts-test/03-inventario.sql` lo genera para todos los productos). → se cargaron desde `inserts-test/catalogo_syscom.sql`; al cierre hay 198 activos, todos con imagen.
+- [x] La base en Aiven es compartida: los productos nuevos los carga Mathias en Aiven al mergear el PR.
 
 ### Semana 6 · Pantallas web (en `web-client`)
-- [ ] `/catalogo` (grilla con filtros), `/catalogo/{id}` (detalle + "agregar al carrito"), `/admin/productos` (CRUD). Ya existe `CatalogoApi` en el web-client: extenderla.
+- ~~`/catalogo` (grilla con filtros), `/catalogo/{id}` (detalle + "agregar al carrito"), `/admin/productos` (CRUD). Ya existe `CatalogoApi` en el web-client: extenderla.~~ → no se hizo: la web es la app React de `DSW_II_PROYECTO_WEB`.
 
 ### Semana 7 · Pruebas
-- [ ] Tests de `ProductoService` con Mockito (crear, actualizar, producto inexistente).
-- [ ] Más tests `@DataJpaTest` de los filtros.
-- [ ] `postman/ms-catalogo.postman_collection.json`.
+- ~~Tests de `ProductoService` con Mockito (crear, actualizar, producto inexistente).~~ → cubierto con pruebas de integración (HTTP + H2) en `*IntegracionTest`.
+- ~~Más tests `@DataJpaTest` de los filtros.~~ → cubierto con pruebas de integración (HTTP + H2) en `*IntegracionTest`.
+- ~~`postman/ms-catalogo.postman_collection.json`.~~ → no se hizo: hay `IntiGuard-smoke` e `IntiGuard-seguridad`; el flujo completo se prueba con `pruebas/prueba-e2e.py`.
 
 ### Semana 8 · S3
-- [ ] Subir imágenes a S3 (bucket público de lectura o CloudFront) y guardar la URL en `imagen_url`.
+- ~~Subir imágenes a S3 (bucket público de lectura o CloudFront) y guardar la URL en `imagen_url`.~~ → no se hizo: `imagen_url` guarda enlaces externos (Syscom).
 
 ## Dependencias con otros servicios
 

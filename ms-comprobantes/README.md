@@ -235,24 +235,26 @@ Como `id_venta` no tiene FK, **puedes emitir comprobantes desde Postman con `idV
 
 ## Pendientes por semana
 
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
 ### Semana 2–3
-- [ ] `EmitirComprobanteRequest` con validaciones (DNI de 8 dígitos para boleta, RUC de 11 para factura: `@Pattern` o validación en el service).
-- [ ] `ComprobanteService.emitir()` en `@Transactional`: bloquear la serie del tipo, `serie.siguiente()`, guardar `serie` + `correlativo` (MySQL arma el `numero`). Traducir la violación de la CHECK de documento a un 400 claro.
-- [ ] Idempotencia: si ya existe un comprobante para `idVenta`, devolverlo.
+- [x] `EmitirComprobanteRequest` con validaciones (DNI de 8 dígitos para boleta, RUC de 11 para factura: `@Pattern` o validación en el service).
+- [x] `ComprobanteService.emitir()` en `@Transactional`: bloquear la serie del tipo, `serie.siguiente()`, guardar `serie` + `correlativo` (MySQL arma el `numero`). Traducir la violación de la CHECK de documento a un 400 claro.
+- [x] Idempotencia: si ya existe un comprobante para `idVenta`, devolverlo.
 
 ### Semana 4
-- [ ] Acordar el contrato con Evelyn (ms-pedidos) y probar el checkout juntos.
+- [x] Acordar el contrato con Evelyn (ms-pedidos) y probar el checkout juntos.
 
 ### Semana 5 · PDF
-- [ ] `GET /comprobantes/{id}/pdf` con **OpenPDF** (`com.github.librepdf:openpdf`, simple y libre): cabecera IntiGuard, número, fecha, cliente, total. Respuesta `application/pdf`.
-- [ ] Reporte de ventas por rango de fechas (JSON; PDF opcional).
+- [x] `GET /comprobantes/{id}/pdf` con **OpenPDF** (`com.github.librepdf:openpdf`, simple y libre): cabecera IntiGuard, número, fecha, cliente, total. Respuesta `application/pdf`.
+- [x] Reporte de ventas por rango de fechas (JSON; PDF opcional).
 
 ### Semana 6 · Pantallas web
-- [ ] `/comprobantes` (lista) y `/comprobantes/{id}` (detalle + botón "Descargar PDF") en `web-client`.
+- ~~`/comprobantes` (lista) y `/comprobantes/{id}` (detalle + botón "Descargar PDF") en `web-client`.~~ → no se hizo: la web es la app React de `DSW_II_PROYECTO_WEB`.
 
 ### Semana 7 · Pruebas
-- [ ] Tests de `emitir()`: primer número `B001-00000001`, el segundo `00000002`, factura con RUC inválido → 400, emitir dos veces la misma venta devuelve el mismo.
-- [ ] `postman/ms-comprobantes.postman_collection.json`.
+- [x] Tests de `emitir()`: primer número `B001-00000001`, el segundo `00000002`, factura con RUC inválido → 400, emitir dos veces la misma venta devuelve el mismo.
+- ~~`postman/ms-comprobantes.postman_collection.json`.~~ → no se hizo: hay `IntiGuard-smoke` e `IntiGuard-seguridad`; el flujo completo se prueba con `pruebas/prueba-e2e.py`.
 
 ## Cómo correrlo
 

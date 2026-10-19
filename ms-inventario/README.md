@@ -283,11 +283,13 @@ Confirmar y liberar solo reciben `idVenta`, porque las cantidades ya quedaron gu
 
 ## Pendientes por semana
 
-- [ ] **Semana 2–3**: `reservar`, `confirmar`, `liberar` con su `Reserva` y su movimiento; tarea `@Scheduled` que libera las reservas vencidas; `GET /movimientos`; entrada y ajuste de stock (ADMIN); `StockInsuficienteException` → 409.
-- [ ] **Semana 4**: acordar el contrato con ms-pedidos y probar el checkout juntos.
-- [ ] **Semana 5**: semilla de stock para los 200 productos (coordinar con César).
-- [ ] **Semana 6**: pantalla `/admin/stock` en `web-client`.
-- [ ] **Semana 7**: tests Mockito de `StockService` (reserva OK, stock insuficiente, liberar devuelve el disponible) y `postman/ms-inventario.postman_collection.json`.
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
+- [x] **Semana 2–3**: `reservar`, `confirmar`, `liberar` con su `Reserva` y su movimiento; tarea `@Scheduled` que libera las reservas vencidas; `GET /movimientos`; entrada y ajuste de stock (ADMIN); `StockInsuficienteException` → 409.
+- [x] **Semana 4**: acordar el contrato con ms-pedidos y probar el checkout juntos.
+- [x] **Semana 5**: semilla de stock para los 200 productos (coordinar con César).
+- ~~**Semana 6**: pantalla `/admin/stock` en `web-client`.~~ → no se hizo: la web es la app React de `DSW_II_PROYECTO_WEB`.
+- ~~**Semana 7**: tests Mockito de `StockService` (reserva OK, stock insuficiente, liberar devuelve el disponible) y `postman/ms-inventario.postman_collection.json`.~~ → no se hizo: hay `IntiGuard-smoke` e `IntiGuard-seguridad`; el flujo completo se prueba con `pruebas/prueba-e2e.py`.
 
 ## Cómo correrlo
 

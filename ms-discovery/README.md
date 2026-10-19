@@ -32,9 +32,11 @@ Al levantar `docker compose up`, el panel muestra registrados a los 6 clientes: 
 
 ## Pendientes
 
-- [ ] **Semana 8**: en el perfil `cloud`, volver a activar `enable-self-preservation: true` (en producción es lo correcto).
-- [ ] **Semana 8**: no exponer el puerto 8761 al mundo en la EC2: solo la red interna de Docker (quitar `ports` en el compose de nube o cerrarlo en el security group).
-- [ ] (Opcional) Proteger el panel con usuario y contraseña.
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
+- ~~**Semana 8**: en el perfil `cloud`, volver a activar `enable-self-preservation: true` (en producción es lo correcto).~~ → no aplica: en Render no se despliega Eureka (los servicios se llaman por URL pública).
+- ~~**Semana 8**: no exponer el puerto 8761 al mundo en la EC2: solo la red interna de Docker (quitar `ports` en el compose de nube o cerrarlo en el security group).~~ → no aplica: en Render no se despliega Eureka (los servicios se llaman por URL pública).
+- ~~(Opcional) Proteger el panel con usuario y contraseña.~~ → no se hizo.
 
 ## Cómo correrlo
 

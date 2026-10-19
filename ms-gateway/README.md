@@ -66,18 +66,20 @@ El mapa completo está en [`ARRANQUE_PROYECTO.md`](../ARRANQUE_PROYECTO.md#quié
 
 ## Pendientes por semana
 
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
 ### Semana 3 · Seguridad en el borde
 - [x] `JwtGatewayFilter` (C4) con rutas públicas e internas configurables, y sus tests.
 - [x] Verificado con el sistema completo y `EXIGIR_TOKEN=true`: sin token → 401, token válido → 200, vencido o inventado → 401, rutas internas → 403, y los servicios rechazan sin token aunque se los llame sin pasar por el gateway.
 - [x] Flujo completo con un token real del login (C3): login por el gateway → 200 con token → ese token abre `/usuarios/{id}`.
-- [ ] Pasar `EXIGIR_TOKEN=true` para todos cuando exista el registro de clientes.
+- ~~Pasar `EXIGIR_TOKEN=true` para todos cuando exista el registro de clientes.~~ → en Render el perfil `cloud` exige el token siempre; en local sigue en `false`.
 
 ### Semana 5
-- [ ] (Opcional) `RequestRateLimiter` o timeouts globales: `spring.cloud.gateway.server.webflux.httpclient.response-timeout`.
+- ~~(Opcional) `RequestRateLimiter` o timeouts globales: `spring.cloud.gateway.server.webflux.httpclient.response-timeout`.~~ → no se hizo.
 
 ### Semana 8 · Nube
-- [ ] Perfil `cloud`: el gateway queda detrás de Nginx con HTTPS (Let's Encrypt). Solo Nginx expone 80 y 443.
-- [ ] `JWT_SECRET` desde SSM Parameter Store.
+- ~~Perfil `cloud`: el gateway queda detrás de Nginx con HTTPS (Let's Encrypt). Solo Nginx expone 80 y 443.~~ → reemplazado: Render da el HTTPS.
+- ~~`JWT_SECRET` desde SSM Parameter Store.~~ → reemplazado: `JWT_SECRET` lo genera Render en el grupo `intiguard-comun`.
 
 ## Cómo correrlo y probarlo
 

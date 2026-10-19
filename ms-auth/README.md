@@ -259,9 +259,11 @@ C1, C2 y C3 los adelantó Mathias en la semana 2. **Lo que queda de tu lado: reg
 
 ## Pendientes por semana
 
+> **Estado al cierre (19/10/2026):** [x] hecho · ~~tachado~~ no se hizo o se resolvió de otra forma (el motivo va al lado).
+
 ### Semana 2
-- [ ] `POST /auth/registro`: `RegistroRequest` con validaciones, verificar `existsByCorreo` → **409** si ya existe, guardar con `passwordEncoder.encode()` y rol CLIENTE.
-- [ ] `POST/PUT/DELETE /usuarios` (ADMIN).
+- [x] `POST /auth/registro`: `RegistroRequest` con validaciones, verificar `existsByCorreo` → **409** si ya existe, guardar con `passwordEncoder.encode()` y rol CLIENTE.
+- [x] `POST/PUT/DELETE /usuarios` (ADMIN).
 
 ### Semana 3 · Entrega clave: login con JWT
 - [x] `AuthService.login(LoginRequest)` con las 6 reglas de arriba.
@@ -269,15 +271,15 @@ C1, C2 y C3 los adelantó Mathias en la semana 2. **Lo que queda de tu lado: reg
 - [x] Excepciones `CredencialesInvalidasException` (401) y `CuentaBloqueadaException` (423) en el `GlobalExceptionHandler`.
 - [x] `common-security` (`JwtAuthFilter`, `UsuarioActual`): lo hizo Mathias. Cuando el login funcione, avisar al equipo para pasar a `EXIGIR_TOKEN=true`.
 - [x] `@PreAuthorize("hasRole('ADMIN')")` en `GET /usuarios`; `GET /usuarios/{id}` solo ADMIN o uno mismo.
-- [ ] Lo mismo en `POST`, `PUT` y `DELETE /usuarios` cuando existan.
+- [x] Lo mismo en `POST`, `PUT` y `DELETE /usuarios` cuando existan.
 
 ### Semana 6 · Pantallas web (en `web-client`)
-- [ ] `/login`, `/registro`, `/perfil`, `/admin/usuarios`. Guardar el token en la sesión HTTP del web-client.
+- ~~`/login`, `/registro`, `/perfil`, `/admin/usuarios`. Guardar el token en la sesión HTTP del web-client.~~ → no se hizo: la web es la app React de `DSW_II_PROYECTO_WEB`.
 
 ### Semana 7 · Pruebas
 - [x] Tests de `AuthService` con Mockito: credenciales correctas, correo inexistente, contraseña mala, quinto intento bloquea, cuenta bloqueada responde 423, cuenta inactiva.
-- [ ] Tests del registro.
-- [ ] Colección `postman/ms-auth.postman_collection.json` que guarde el token en `{{token}}` con un script de test.
+- [x] Tests del registro.
+- ~~Colección `postman/ms-auth.postman_collection.json` que guarde el token en `{{token}}` con un script de test.~~ → no se hizo: hay `IntiGuard-smoke` e `IntiGuard-seguridad`; el flujo completo se prueba con `pruebas/prueba-e2e.py`.
 
 ## Cómo correrlo
 

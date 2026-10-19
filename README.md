@@ -4,7 +4,14 @@ E-commerce de equipos de seguridad electrónica (cámaras, alarmas, sensores de 
 
 Proyecto del curso **Desarrollo de Servicios Web II · Cibertec**. El plan completo (decisiones, cronograma y despliegue) está en [`docs/Plan de ejecución — IntiGuard v2.md`](docs/Plan%20de%20ejecución%20—%20IntiGuard%20v2.md).
 
-> **¿Recién llegas al equipo?** Empieza por [`ARRANQUE_PROYECTO.md`](ARRANQUE_PROYECTO.md): cómo dejar tu microservicio funcionando el primer día, paso a paso, y qué le debe cada integrante a quién.
+> **Proyecto concluido (19/10/2026).** Los 18 casos de uso funcionan de punta a punta y el sistema está publicado en Render. El resumen está en [Estado final](#estado-final). Para correrlo en tu máquina: [`ARRANQUE_PROYECTO.md`](ARRANQUE_PROYECTO.md). Para el despliegue: [`docs/DESPLIEGUE_RENDER.md`](docs/DESPLIEGUE_RENDER.md).
+
+| Publicado | URL |
+|---|---|
+| Tienda y panel (web) | https://intiward-web.onrender.com |
+| API (gateway) | https://intiguard-gateway.onrender.com |
+
+En el plan gratuito de Render cada servicio se duerme tras 15 min sin tráfico; la primera visita después tarda 1–2 min. Antes de una demo: `bash pruebas/despertar-render.sh`.
 
 ---
 
@@ -47,7 +54,8 @@ Una tienda en línea con tres tipos de usuario:
 - **Database per Service:** cada servicio tiene su schema y su usuario MySQL con permisos solo sobre ese schema. Si necesita un dato de otro, lo pide por HTTP.
 - **Seguridad con JWT:** el login (ms-auth) emite un token con `idUsuario` y rol. El gateway lo valida y bloquea las rutas internas; cada servicio lo vuelve a validar con `common-security`.
 - **Capas en cada servicio:** `controller → service → repository → entity`, con `dto` y `mapper` entre capas y `exception` con un formato único de error (`ApiError`).
-- **Cliente web:** se está rehaciendo en **React + Vite** (diseño en [`docs/PROTOTIPO_WEB.md`](docs/PROTOTIPO_WEB.md), arquitectura FSD, endpoints y mocks en [`docs/ARQUITECTURA_WEB.md`](docs/ARQUITECTURA_WEB.md)). El `web-client` actual en Thymeleaf (puerto 8090) queda como referencia hasta que la app React lo reemplace.
+- **Cliente web:** app **React + Vite** en su propio repositorio, `DSW_II_PROYECTO_WEB` (diseño en [`docs/PROTOTIPO_WEB.md`](docs/PROTOTIPO_WEB.md), arquitectura FSD en [`docs/ARQUITECTURA_WEB.md`](docs/ARQUITECTURA_WEB.md)). Habla con el backend real: los mocks se eliminaron el 19/10/2026. El `web-client` en Thymeleaf (puerto 8090) quedó sin terminar y no se usa.
+- **En Render no hay Eureka:** el plan gratuito no deja que los servicios se llamen por la red privada, así que se llaman por su URL pública (`EUREKA_ENABLED=false` y `MS_*_URL`). Las rutas internas exigen la cabecera `X-Clave-Interna`. Detalle en [`docs/DESPLIEGUE_RENDER.md`](docs/DESPLIEGUE_RENDER.md).
 
 ---
 
@@ -61,6 +69,8 @@ Una tienda en línea con tres tipos de usuario:
 | 3 · Arévalo | `b-arevalo` | ms-inventario | 8083 | `db_inventario` | [ms-inventario](ms-inventario/README.md) |
 | 4 · Evelyn | `b-guerrero` | ms-pedidos | 8084 | `db_pedidos` | [ms-pedidos](ms-pedidos/README.md) |
 | 5 · Mathias | `b-alayo` | Cliente web (React), ms-gateway, ms-discovery, integración, base de datos y despliegue | 5173 · 8080 · 8761 | — | [ms-gateway](ms-gateway/README.md) · [ms-discovery](ms-discovery/README.md) · [prototipo web](docs/PROTOTIPO_WEB.md) |
+
+Desde el 18/10/2026 el equipo dejó de trabajar en el proyecto y Mathias completó los servicios pendientes, cada uno en la rama de su integrante (`b-*` → `develop` → `main`), con el avance registrado en [`docs/SEGUIMIENTO_ENDPOINTS.csv`](docs/SEGUIMIENTO_ENDPOINTS.csv).
 
 ---
 
@@ -141,9 +151,11 @@ docker compose ps                      # todos "healthy"
 ├─ infra/scripts/          init-aiven.sh (crea la base) y token-dev.sh                          ← solo Mathias
 ├─ common-security/        Librería JWT que importan los 5 servicios de negocio
 ├─ ms-*/                   Un microservicio por carpeta, cada uno con su README, Dockerfile y tests
-├─ web-client/             Cliente Thymeleaf actual (referencia hasta que lo reemplace la app React)
+├─ web-client/             Cliente Thymeleaf sin terminar (no se usa; la web es la app React de DSW_II_PROYECTO_WEB)
+├─ render.yaml             Blueprint de Render: los 6 servicios del backend
+├─ pruebas/                prueba-e2e.py (flujo completo) y despertar-render.sh
 ├─ postman/                Colecciones (smoke y seguridad) + environments
-└─ docs/                   Plan de ejecución, prototipo web y arquitectura del cliente web
+└─ docs/                   Prototipo y arquitectura de la web, despliegue en Render y seguimiento de endpoints
 ```
 
 ---
@@ -197,71 +209,32 @@ Lo que necesita el cliente web de cada servicio (endpoints, tipos de datos, para
 
 ---
 
-## Estado actual · semana 2
+## Estado final
 
-✅ Verificado el 2026-10-15: `./mvnw verify` con **38 pruebas en verde**; los microservicios levantan contra Aiven con SSL; Eureka registra a todos; el gateway enruta a los 5 servicios; el login funciona de punta a punta (token, 401, 423 al quinto intento); la colección de Postman de seguridad pasa completa.
+**Concluido el 19/10/2026.** Todo lo que pedía el plan está hecho, salvo lo que se indica en "Lo que no se hizo".
 
-| Ya funciona | Detalle |
+| Área | Estado |
 |---|---|
-| Infraestructura | Eureka, gateway con rutas a los 5 servicios, Docker Compose (cada uno levanta solo su servicio), healthchecks |
-| Base de datos | MySQL 8.4 en Aiven: 5 schemas, 5 usuarios con permisos solo sobre su schema, modelo completo con reglas en la base (CHECK, claves únicas), vista de conciliación de stock y datos iniciales (roles, 6 marcas, 6 categorías, 8 productos con 10 unidades, series B001/F001) |
-| Cada microservicio | Entidades del modelo definitivo, repositorios, DTO, mapper, `GET` de lectura, manejo global de errores (400, 401, 403, 404, 500), perfiles default y cloud, Dockerfile y pruebas de datos |
-| Seguridad | JWT con `idUsuario` y rol (C1); `JwtAuthFilter` y `UsuarioActual` en los 5 servicios (C2); **login** con las 6 reglas del plan (C3); gateway con rutas públicas, rutas internas bloqueadas y validación del token (C4); `/usuarios` solo para ADMIN; BCrypt(10). `EXIGIR_TOKEN=false` en desarrollo |
-| ms-pedidos | Feign y Resilience4j configurados, `CatalogoClient` de ejemplo, cálculo de IGV |
-| Documentación | `ARRANQUE_PROYECTO.md`, "Guía de negocio" y contratos en el README de cada servicio |
-| GitHub | CI con matriz de 8 módulos, plantilla de PR, ramas por integrante |
+| Casos de uso | Los 18 (CU01–CU18) funcionan de punta a punta, en la web y por la API |
+| Pruebas | `./mvnw verify`: **78 pruebas en verde** (common-security 14, auth 19, catálogo 9, comprobantes 9, gateway 7, inventario 8, pedidos 12), con H2: no necesitan Aiven |
+| Prueba de punta a punta | `pruebas/prueba-e2e.py`: 52 verificaciones del flujo completo + 7 con comprobantes caído (`caida`) + 14 de las llamadas del panel (`web`). Pasa entera contra local y contra Render |
+| Checkout | Saga con compensación: venta PENDIENTE → reserva todo o nada → comprobante (circuit breaker de 2 s) → confirmación; si algo falla, se libera el stock y la venta queda ANULADA |
+| Seguridad | JWT en los 6 servicios; en la nube el token es obligatorio (perfil `cloud`); rutas internas protegidas con `X-Clave-Interna`; CORS solo para la web publicada y `localhost:5173` |
+| Base de datos | MySQL 8.4 en Aiven, un schema por servicio. **198 productos** reales, todos con imagen (los 8 productos iniciales y los datos de prueba se borraron el 19/10/2026; respaldo en `infra/respaldos/`) |
+| Despliegue | Render, plan gratuito: 6 Web Services con Docker (Blueprint `render.yaml`) y la web como Static Site. Región Virginia (la base está en Nueva Jersey) y hora de Lima en las JVM |
+| Web | React + Vite, 24 vistas, conectada al backend real |
 
----
+**Lo que no se hizo**
 
-## Pendientes por integrante
+- **Imágenes en S3/CloudFront:** `imagen_url` guarda enlaces externos (Syscom). El navegador las carga directo; si el proveedor borra una, el producto muestra un ícono.
+- **`web-client` en Thymeleaf:** quedó sin terminar; lo reemplazó la app React.
+- **`EXIGIR_TOKEN=true` en local:** en desarrollo sigue en `false` (los endpoints protegidos responden sin token si no se manda uno); en Render el perfil `cloud` lo exige siempre.
 
-El detalle (archivos, reglas y checklist por semana) está en el README de cada microservicio.
+**Mantenimiento**
 
-### Galarza · Autenticación y Comprobantes
-- [ ] **S2**: `POST /auth/registro` (rol CLIENTE, 409 si el correo existe) y el CRUD de `/usuarios` (ADMIN).
-- [ ] **S3**: `POST /comprobantes` con serie y correlativo (`SELECT … FOR UPDATE`), validación de DNI y RUC e idempotencia por venta (**C7**).
-- [ ] **S4**: `GET /comprobantes/venta/{idVenta}`; probar la emisión junto con Pedidos.
-- [ ] **S5**: PDF del comprobante y reporte de ventas.
-- [ ] **S7**: pruebas del registro y de la emisión; colecciones de Postman.
-
-### César · Catálogo
-- [ ] **S2**: agregar `activo` a `GET /productos/{id}` (**C5**).
-- [ ] **S2–3**: CRUD de productos (ADMIN) con validaciones, `GET /marcas`, `GET /categorias`, paginación y filtros.
-- [ ] **S5**: lista de 200 productos para cargar en la base (**C9**).
-- [ ] **S7–8**: pruebas, colección de Postman e imágenes.
-
-### Arévalo · Inventario
-- [ ] **S3**: `reservar` / `confirmar` / `liberar` con sus movimientos, todo o nada (409) e idempotentes (**C6**).
-- [ ] **S3**: liberación automática de reservas vencidas (15 min); entrada y ajuste de stock (ADMIN); `GET /movimientos`.
-- [ ] **S4**: probar las reservas junto con Pedidos.
-- [ ] **S7**: pruebas de `StockService` y colección de Postman.
-
-### Evelyn · Pedidos
-- [ ] **S2–3**: carrito (`/carrito/items`), con el dueño tomado del token (`UsuarioActual`).
-- [ ] **S4**: checkout de punta a punta con Feign (**entrega bisagra**, **C8**).
-- [ ] **S5**: circuit breaker (2 s) y compensación (liberar stock, venta ANULADA).
-- [ ] **S7**: pruebas del checkout con Mockito y colección "flujo completo".
-
-### Mathias · Cliente web, gateway e integración
-- [ ] **S2**: prototipo del cliente web ([`docs/PROTOTIPO_WEB.md`](docs/PROTOTIPO_WEB.md)) y proyecto React + Vite.
-- [ ] **S3**: CORS en el gateway para la app web; proxy de Vite en desarrollo.
-- [ ] **S6**: pantallas del cliente web conectadas a la API (sesión con JWT, menú por rol).
-- [ ] Integración semanal `develop` → `main`; aplicar en Aiven los cambios de tablas que pida el equipo.
-- [ ] Proteger `main` y `develop` en GitHub; completar CODEOWNERS con los usuarios de GitHub.
-- [ ] **S8**: despliegue (servidor con HTTPS, secretos fuera del código).
-
----
-
-## Pendientes generales (equipo)
-
-- [ ] **Usuarios de GitHub de los cinco**, para CODEOWNERS y para asignar issues.
-- [ ] **Actualizar los README de cada microservicio** al reparto nuevo (nombres en vez de números) y a las reglas de `infra/`.
-- [ ] **Registro de clientes listo → pasar a `EXIGIR_TOKEN=true`** para todos.
-- [ ] **Fecha real de entrega:** el plan asume 8 semanas. Si son menos, se recorta primero el cliente web.
-- [ ] **Preguntar al docente** si Postman cuenta como "cliente que consume la API".
-- [ ] **Dónde se despliegan los microservicios** (la base ya está en Aiven).
-- [ ] Colección de Postman por servicio + "flujo completo".
-- [ ] Ensayo de la sustentación: los cinco deben poder explicar el sistema completo.
+- Publicar un cambio: merge a `main`; Render redespliega solo el servicio que cambió. Si cambias variables en `render.yaml`, haz **Manual Sync** del Blueprint en Render.
+- Mantener los servicios despiertos durante una demo: el contenedor de `DSW_II_PROYECTO_PING_RENDER` (los despierta al levantarlo y los suspende al bajarlo) o `bash pruebas/despertar-render.sh`.
+- Usuarios: el administrador del panel es el de `ADMIN_CORREO` / `ADMIN_CLAVE` en Render. Los clientes de prueba (`e2e.*@intiguard.pe`) están desactivados.
 
 ---
 
@@ -287,7 +260,7 @@ El detalle (archivos, reglas y checklist por semana) está en el README de cada 
 
 Esta sección explica **cómo funciona la tienda según el backend**: quién usa el sistema, qué puede hacer cada uno, qué datos se piden, qué reglas se cumplen y qué respuestas puede recibir el usuario. Sirve para armar cualquier prototipo **sin leer código**. No dice nada del aspecto visual (eso está en [`docs/PROTOTIPO_WEB.md`](docs/PROTOTIPO_WEB.md)).
 
-Estado de cada caso de uso: ✅ ya funciona · 🟡 funciona en parte · ⬜ pendiente.
+Estado de cada caso de uso (19/10/2026): ✅ funciona. Los 18 están completos.
 
 ### Actores
 

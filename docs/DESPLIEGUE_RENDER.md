@@ -2,6 +2,10 @@
 
 Cómo publicar el backend (6 servicios) y la web en Render, sin costo. La base de datos sigue siendo el MySQL de Aiven.
 
+> **Publicado el 18–19/10/2026** y verificado con la prueba completa (52 + 14 verificaciones en verde contra Render).
+> Lo aprendido en el despliegue real está en [Operación](#operación): por qué aparece un 502, cómo saber si un servicio
+> está dormido y cómo desplegar con Render CLI.
+
 ## Qué se crea
 
 | Servicio en Render | Tipo | Qué es | URL |
@@ -12,7 +16,7 @@ Cómo publicar el backend (6 servicios) y la web en Render, sin costo. La base d
 | `intiguard-inventario` | Web Service (Docker) | ms-inventario | `https://intiguard-inventario.onrender.com` |
 | `intiguard-pedidos` | Web Service (Docker) | ms-pedidos | `https://intiguard-pedidos.onrender.com` |
 | `intiguard-comprobantes` | Web Service (Docker) | ms-comprobantes | `https://intiguard-comprobantes.onrender.com` |
-| `intiward-web` | Static Site | La app React (repo `DSW_II_PROYECTO_WEB`) | `https://intiward-web.onrender.com` |
+| `IntiWard_Web` | Static Site | La app React (repo `DSW_II_PROYECTO_WEB`), creada a mano en el Dashboard | `https://intiward-web.onrender.com` |
 
 **Por qué así:**
 
@@ -125,3 +129,56 @@ Y la prueba completa contra lo publicado (crea datos de prueba; la fase `web` lo
 GW=https://intiguard-gateway.onrender.com ADMIN_CORREO=... ADMIN_CLAVE=... python3 -I pruebas/prueba-e2e.py
 GW=https://intiguard-gateway.onrender.com ADMIN_CORREO=... ADMIN_CLAVE=... python3 -I pruebas/prueba-e2e.py web
 ```
+
+## Operación
+
+### Ids de los servicios (Render CLI)
+
+| Servicio | Id |
+|---|---|
+| intiguard-gateway | `srv-dbaprbc9v7es739fiseg` |
+| intiguard-auth | `srv-dbaprbc9v7es739fism0` |
+| intiguard-catalogo | `srv-dbaprbc9v7es739fisg0` |
+| intiguard-inventario | `srv-dbaprbc9v7es739fisf0` |
+| intiguard-pedidos | `srv-dbaprbc9v7es739fisfg` |
+| intiguard-comprobantes | `srv-dbaprbc9v7es739fise0` |
+| IntiWard_Web | `srv-db9so3m1egvs738g9560` |
+
+Render CLI (`render`, v2.30) se instala en `~/.local/bin`. Primera vez: `render login` y `render workspace set`.
+
+```bash
+render services                                        # los 7 servicios
+render deploys list <id> -o json                       # qué commit está desplegado
+render deploys create <id> --commit <sha> --wait       # desplegar a mano (si el auto-deploy no se dispara)
+render logs -r <id> --limit 50                         # logs
+render services instances <id> -o json                 # [] = dormido · [{…}] = despierto
+```
+
+### Dormido, despierto y el 502
+
+- Un servicio gratuito **se duerme tras 15 min sin tráfico de fuera de Render**. No es un tiempo fijo: con tráfico sigue despierto.
+- **El gateway no despierta a los demás.** Las llamadas entre servicios de Render no cuentan como tráfico de fuera: si
+  ms-catalogo está dormido, el gateway recibe al instante la página de error 502 de Render y la web muestra el error.
+  Comprobado el 19/10/2026: el catálogo solo arrancó al llamarlo directo desde fuera.
+- **Despertarlos:** cualquier petición desde fuera a cada servicio (`curl https://intiguard-<servicio>.onrender.com/actuator/health`),
+  o los 6 a la vez con `bash pruebas/despertar-render.sh`. Tardan ~1–1,5 min. `render restart` no sirve para esto.
+- **Mantenerlos despiertos durante un uso largo:** el contenedor de `DSW_II_PROYECTO_PING_RENDER` llama a los 6 cada
+  10 min, y al bajarlo los suspende (API de Render). Gasta 6 de las 750 horas del mes por cada hora prendido.
+
+### Desplegar cambios
+
+- **Backend:** merge a `main`; cada servicio se redespliega solo si cambió su carpeta (`buildFilter`).
+- **Variables del grupo `intiguard-comun`:** cambiarlas en `render.yaml` **no** se aplica solo. Hace falta
+  Dashboard → Blueprints → IntiWard → **Manual Sync**, o editarlas en Environment Groups.
+- **Web:** push a `main` del repo de la web. El 19/10/2026 el auto-deploy no se disparó una vez; si pasa,
+  `render deploys create srv-db9so3m1egvs738g9560 --commit <sha> --wait`.
+- **Caché del CDN:** la web publicada puede mostrar la versión anterior hasta 5 min después del despliegue
+  (`s-maxage=300`). Recargar con `Ctrl+Shift+R`.
+
+### Datos
+
+- Base compartida entre local y Render (Aiven). El 19/10/2026 se borraron los 8 productos iniciales sin imagen y todos
+  los datos de prueba (ventas, comprobantes, reservas y movimientos); el respaldo está en `infra/respaldos/` (fuera de Git).
+  La numeración de comprobantes volvió a empezar en `B001-00000001` / `F001-00000001`.
+- `pruebas/prueba-e2e.py` crea datos de prueba cada vez que corre (un producto, dos clientes y ventas); la fase `web`
+  desactiva el producto y los clientes, pero las ventas quedan.
