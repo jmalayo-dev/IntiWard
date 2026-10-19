@@ -7,10 +7,8 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import pe.intiguard.catalogo.entity.Producto;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSpecificationExecutor<Producto> {
@@ -27,10 +25,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSp
     /** [idMarca, cantidad de productos activos] */
     @Query("select p.marca.id, count(p) from Producto p where p.activo = true group by p.marca.id")
     List<Object[]> contarActivosPorMarca();
-
-    /** [idMarca, cantidad de productos activos entre los ids dados] (los que tienen stock) */
-    @Query("select p.marca.id, count(p) from Producto p where p.activo = true and p.id in :ids group by p.marca.id")
-    List<Object[]> contarActivosPorMarcaEntre(@Param("ids") Collection<Long> ids);
 
     /** [idCategoria, cantidad de productos activos] */
     @Query("select p.categoria.id, count(p) from Producto p where p.activo = true group by p.categoria.id")
