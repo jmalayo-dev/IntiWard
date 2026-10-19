@@ -19,7 +19,7 @@ César;b-cesar;4.3 Detalle de producto, 4.9 Compra no completada, 4.10 Mis pedid
 César;b-cesar;5.3 Crear / editar producto;POST /productos;NO_DEPENDIENTE;ninguno;SI;2026-10-18
 César;b-cesar;5.2 Productos, 5.3 Crear / editar producto;PUT /productos/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
 César;b-cesar;5.2 Productos;DELETE /productos/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
-César;b-cesar;4.2 Catálogo, Buscador del encabezado, 5.2 Productos, 5.3 Crear / editar producto, 5.4 Marcas y categorías;GET /marcas;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;4.2 Catálogo, Buscador del encabezado, 5.2 Productos, 5.3 Crear / editar producto, 5.4 Marcas y categorías;GET /marcas;DEPENDIENTE;ms-inventario;SI;2026-10-19
 César;b-cesar;4.2 Catálogo, Buscador del encabezado, 5.2 Productos, 5.3 Crear / editar producto, 5.4 Marcas y categorías;GET /categorias;NO_DEPENDIENTE;ninguno;SI;2026-10-18
 César;b-cesar;5.4 Marcas y categorías;POST /marcas;NO_DEPENDIENTE;ninguno;SI;2026-10-18
 César;b-cesar;5.4 Marcas y categorías;POST /categorias;NO_DEPENDIENTE;ninguno;SI;2026-10-18
