@@ -1,6 +1,8 @@
-# IntiGuard v2 · Levanta MySQL + los 8 servicios con un comando:  docker compose up -d --build
-# Dueño: integrante 1. Orden de arranque: mysql → discovery → auth/catálogo/inventario/comprobantes → pedidos → gateway → web
 name: intiguard
+
+# La base de datos es el MySQL de Aiven (no hay MySQL local). Las credenciales salen de .env.
+# Cada integrante levanta solo lo que usa, por ejemplo: docker compose up -d ms-catalogo
+# Solo hace falta la DB_PASS_* del servicio que se levanta.
 
 x-java: &java
   restart: unless-stopped
@@ -8,34 +10,20 @@ x-java: &java
     JAVA_OPTS: "-Xms128m -Xmx256m"
     EUREKA_HOST: ms-discovery
     JWT_SECRET: ${JWT_SECRET:-clave-local-solo-para-desarrollo-no-usar-en-nube}
+    # false hasta que exista el login (C3): el token se valida si llega, pero no es obligatorio
+    EXIGIR_TOKEN: ${EXIGIR_TOKEN:-false}
 
 x-db-service: &db-service
   <<: *java
   depends_on:
-    mysql:
-      condition: service_healthy
     ms-discovery:
       condition: service_healthy
 
-services:
-  mysql:
-    image: mysql:8.4
-    container_name: intiguard-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_local}
-    ports:
-      - "3307:3306"   # 3307 en el host para no chocar con un MySQL local en 3306
-    volumes:
-      - ./infra/mysql:/docker-entrypoint-initdb.d:ro
-      - mysql-data:/var/lib/mysql
-    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root_local}"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
+x-aiven: &aiven
+  AIVEN_HOST: ${AIVEN_HOST:-}
+  AIVEN_PORT: ${AIVEN_PORT:-}
 
+services:
   ms-discovery:
     <<: *java
     build: { context: ., dockerfile: ms-discovery/Dockerfile }
@@ -50,12 +38,10 @@ services:
     image: intiguard/ms-auth:local
     ports: ["8081:8081"]
     environment:
-      <<: *java-env
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: db_auth
-      DB_USER: usr_auth
-      DB_PASSWORD: usr_auth_local
+      <<: [*java-env, *aiven]
+      DB_PASS_AUTH: ${DB_PASS_AUTH:-}
+      ADMIN_CORREO: ${ADMIN_CORREO:-}
+      ADMIN_CLAVE: ${ADMIN_CLAVE:-}
 
   ms-catalogo:
     <<: *db-service
@@ -63,12 +49,8 @@ services:
     image: intiguard/ms-catalogo:local
     ports: ["8082:8082"]
     environment:
-      <<: *java-env
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: db_catalogo
-      DB_USER: usr_catalogo
-      DB_PASSWORD: usr_catalogo_local
+      <<: [*java-env, *aiven]
+      DB_PASS_CATALOGO: ${DB_PASS_CATALOGO:-}
 
   ms-inventario:
     <<: *db-service
@@ -76,12 +58,8 @@ services:
     image: intiguard/ms-inventario:local
     ports: ["8083:8083"]
     environment:
-      <<: *java-env
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: db_inventario
-      DB_USER: usr_inventario
-      DB_PASSWORD: usr_inventario_local
+      <<: [*java-env, *aiven]
+      DB_PASS_INVENTARIO: ${DB_PASS_INVENTARIO:-}
 
   ms-comprobantes:
     <<: *db-service
@@ -89,31 +67,19 @@ services:
     image: intiguard/ms-comprobantes:local
     ports: ["8085:8085"]
     environment:
-      <<: *java-env
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: db_comprobantes
-      DB_USER: usr_comprobantes
-      DB_PASSWORD: usr_comprobantes_local
+      <<: [*java-env, *aiven]
+      DB_PASS_COMPROBANTES: ${DB_PASS_COMPROBANTES:-}
 
+  # Para probar el checkout hay que levantar también catálogo, inventario y comprobantes:
+  # docker compose up -d ms-pedidos ms-catalogo ms-inventario ms-comprobantes
   ms-pedidos:
-    <<: *java
+    <<: *db-service
     build: { context: ., dockerfile: ms-pedidos/Dockerfile }
     image: intiguard/ms-pedidos:local
     ports: ["8084:8084"]
-    depends_on:
-      mysql: { condition: service_healthy }
-      ms-discovery: { condition: service_healthy }
-      ms-catalogo: { condition: service_healthy }
-      ms-inventario: { condition: service_healthy }
-      ms-comprobantes: { condition: service_healthy }
     environment:
-      <<: *java-env
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: db_pedidos
-      DB_USER: usr_pedidos
-      DB_PASSWORD: usr_pedidos_local
+      <<: [*java-env, *aiven]
+      DB_PASS_PEDIDOS: ${DB_PASS_PEDIDOS:-}
 
   ms-gateway:
     <<: *java
@@ -121,8 +87,10 @@ services:
     image: intiguard/ms-gateway:local
     ports: ["8080:8080"]
     depends_on:
-      ms-auth: { condition: service_healthy }
-      ms-pedidos: { condition: service_healthy }
+      ms-discovery: { condition: service_healthy }
+    environment:
+      <<: *java-env
+      CORS_ORIGENES: ${CORS_ORIGENES:-http://localhost:5173,http://localhost:4173}
 
   web-client:
     <<: *java
@@ -134,6 +102,3 @@ services:
     environment:
       <<: *java-env
       GATEWAY_URL: http://ms-gateway:8080
-
-volumes:
-  mysql-data:

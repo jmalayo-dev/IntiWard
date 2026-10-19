@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  # Render asigna el puerto en PORT
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -8,31 +9,67 @@ spring:
     gateway:
       server:
         webflux:
-          # Enrutamiento por prefijo. "lb://" significa: pedirle a Eureka dónde está el servicio
+          # CORS para cuando la web se sirve desde otro dominio (nube). En desarrollo no hace falta:
+          # el proxy de Vite hace que el navegador vea un solo origen. Orígenes separados por coma.
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowed-origin-patterns: ${CORS_ORIGENES:http://localhost:5173,http://localhost:4173}
+                allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+                allowed-headers: "*"
+                exposed-headers: Content-Disposition
+                max-age: 3600
+          # Enrutamiento por prefijo. "lb://" significa: pedirle a Eureka dónde está el servicio.
+          # En Render no hay Eureka: cada MS_*_URL trae la URL pública del servicio (https://...onrender.com)
           routes:
             - id: ms-auth
-              uri: lb://ms-auth
+              uri: ${MS_AUTH_URL:lb://ms-auth}
               predicates:
                 - Path=/auth/**,/usuarios/**
             - id: ms-catalogo
-              uri: lb://ms-catalogo
+              uri: ${MS_CATALOGO_URL:lb://ms-catalogo}
               predicates:
                 - Path=/productos/**,/marcas/**,/categorias/**
             - id: ms-inventario
-              uri: lb://ms-inventario
+              uri: ${MS_INVENTARIO_URL:lb://ms-inventario}
               predicates:
                 - Path=/stock/**,/movimientos/**
             - id: ms-pedidos
-              uri: lb://ms-pedidos
+              uri: ${MS_PEDIDOS_URL:lb://ms-pedidos}
               predicates:
                 - Path=/carrito/**,/pedidos/**
             - id: ms-comprobantes
-              uri: lb://ms-comprobantes
+              uri: ${MS_COMPROBANTES_URL:lb://ms-comprobantes}
               predicates:
                 - Path=/comprobantes/**
 
+# Contrato C4: seguridad en la puerta de entrada (filter/JwtGatewayFilter)
+intiguard:
+  jwt:
+    secret: ${JWT_SECRET:clave-local-solo-para-desarrollo-no-usar-en-nube}
+  security:
+    # false mientras no exista el login (C3): el token se valida si llega, pero no es obligatorio
+    exigir-token: ${EXIGIR_TOKEN:false}
+    rutas-publicas:
+      - POST /auth/login
+      - POST /auth/registro
+      - GET /productos/**
+      - GET /marcas/**
+      - GET /categorias/**
+      - GET /stock
+      - GET /stock/*
+      - /actuator/health/**
+    # Solo las llama ms-pedidos por Feign, dentro de la red. Desde afuera: 403 siempre.
+    rutas-internas:
+      - POST /stock/reservar
+      - POST /stock/confirmar
+      - POST /stock/liberar
+      - POST /comprobantes
+
 eureka:
   client:
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:

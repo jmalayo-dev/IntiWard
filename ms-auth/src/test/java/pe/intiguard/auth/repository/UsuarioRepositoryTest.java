@@ -22,11 +22,15 @@ class UsuarioRepositoryTest {
     void encuentraUnUsuarioPorCorreo() {
         Rol cliente = rolRepository.save(Rol.builder().nombre("CLIENTE").build());
         usuarioRepository.save(Usuario.builder()
-                .nombre("Ana Torres").correo("ana@intiguard.pe").password("hash").rol(cliente).build());
+                .nombres("Ana").apellidos("Torres").correo("ana@intiguard.pe").claveHash("hash").rol(cliente).build());
 
         assertThat(usuarioRepository.findByCorreo("ana@intiguard.pe"))
                 .isPresent()
-                .get().extracting(u -> u.getRol().getNombre()).isEqualTo("CLIENTE");
+                .get()
+                .satisfies(u -> {
+                    assertThat(u.getRol().getNombre()).isEqualTo("CLIENTE");
+                    assertThat(u.getCreadoEn()).isNotNull();
+                });
         assertThat(usuarioRepository.existsByCorreo("nadie@intiguard.pe")).isFalse();
     }
 }

@@ -45,6 +45,10 @@ Cubre la fila de la ficha "consumo de la API por un cliente" y deja explícita l
 | 4 | `/carrito`, `/checkout`, `/mis-pedidos`, `/admin/ventas` | ⬜ |
 | 5 | `/admin/stock`, `/comprobantes`, `/comprobantes/{id}` (+ descarga PDF) | ⬜ |
 
+## Dependencias con otros servicios
+
+Cada pantalla depende de los endpoints del servicio que muestra: la grilla del catálogo necesita `GET /productos` con filtros (integrante 3), el login necesita C3 (integrante 2), "mis comprobantes" necesita `GET /comprobantes/venta/{idVenta}` (integrante 5), etc. El mapa completo, con semanas, está en [`ARRANQUE_PROYECTO.md`](../ARRANQUE_PROYECTO.md#quién-le-debe-a-quién). Las pantallas son de la semana 6, cuando esos endpoints ya deberían existir.
+
 ## Pendientes del integrante 1
 
 - [ ] Interceptor del `RestClient` que agregue `Authorization: Bearer <token>` desde la sesión.

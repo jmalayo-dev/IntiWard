@@ -1,28 +1,85 @@
-# Configuración por defecto (perfil local). Todo valor sensible entra por variable de entorno;
-# los valores después de ":" son solo para desarrollo contra el MySQL de docker-compose (puerto 3307).
+# Perfil por defecto (desarrollo) contra el MySQL de Aiven. Las credenciales salen de .env:
+# Docker las pasa como variables de entorno y, al correr desde el IDE o con Maven, se lee el .env de la raíz.
 server:
   port: ${PORT:8084}
 
 spring:
   application:
     name: ms-pedidos
+  config:
+    import: optional:file:.env[.properties],optional:file:../.env[.properties]
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:db_pedidos}
-    username: ${DB_USER:usr_pedidos}
-    password: ${DB_PASSWORD:usr_pedidos_local}
+    url: jdbc:mysql://${DB_HOST:${AIVEN_HOST}}:${DB_PORT:${AIVEN_PORT}}/${DB_NAME:db_pedidos}?sslMode=REQUIRED
+    username: ${DB_USER:ms_pedidos}
+    password: ${DB_PASSWORD:${DB_PASS_PEDIDOS}}
+    hikari:
+      # Aiven acepta 46 conexiones en total y la base es compartida por todo el equipo
+      maximum-pool-size: ${DB_POOL_MAX:2}
+      minimum-idle: ${DB_POOL_MIN:1}
   jpa:
     hibernate:
-      # El schema lo crea infra/mysql/*.sql; Hibernate solo valida que coincida
+      # El schema lo crea infra/scripts/init-aiven.sh; Hibernate solo valida que coincida
       ddl-auto: validate
     open-in-view: false
+  cloud:
+    # Crea al arrancar el balanceador de cada servicio: el primer checkout no paga ese costo
+    loadbalancer:
+      eager-load:
+        clients: ms-catalogo,ms-inventario,ms-comprobantes
+    openfeign:
+      client:
+        config:
+          ms-catalogo:
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:2000}
+          ms-inventario:
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:3000}
+          # El circuit breaker corta a los 2 s; el read-timeout es la red de seguridad
+          ms-comprobantes:
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:2500}
 
 intiguard:
   jwt:
     secret: ${JWT_SECRET:clave-local-solo-para-desarrollo-no-usar-en-nube}
     expiration-minutes: 60
+  security:
+    # false mientras no exista el login (C3): el token se usa si llega, pero no es obligatorio
+    exigir-token: ${EXIGIR_TOKEN:false}
+    rutas-publicas: []   # todo exige token
+    # Render: clave compartida para las rutas internas (cabecera X-Clave-Interna). Vacía en local
+    clave-interna: ${CLAVE_INTERNA:}
+  # URL fija de cada servicio que se llama por Feign. Vacía = se busca en Eureka (modo local)
+  servicios:
+    catalogo: ${MS_CATALOGO_URL:}
+    inventario: ${MS_INVENTARIO_URL:}
+    comprobantes: ${MS_COMPROBANTES_URL:}
+  checkout:
+    # Paso 5: si ms-comprobantes no responde en este tiempo, se compensa (circuit breaker)
+    timeout-comprobante-ms: ${CHECKOUT_TIMEOUT_COMPROBANTE_MS:2000}
+    # CU09: una venta PENDIENTE por más tiempo que esto se anula (la reserva ya venció)
+    minutos-pendiente: 15
+
+# Paso 5 del checkout. El starter trae resilience4j-spring-boot3: la configuración sale de aquí
+resilience4j:
+  timelimiter:
+    instances:
+      comprobantes:
+        timeout-duration: ${intiguard.checkout.timeout-comprobante-ms}ms
+  circuitbreaker:
+    instances:
+      comprobantes:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
 
 eureka:
   client:
+    # false en Render: los servicios se llaman por URL fija (intiguard.servicios.*), no por Eureka
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:

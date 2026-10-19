@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Responsable** | Integrante 1 · Mathias |
+| **Responsable** | Mathias · rama `b-alayo` |
 | **Puerto** | 8761 |
 | **Panel** | http://localhost:8761 |
 | **Base de datos** | Ninguna |

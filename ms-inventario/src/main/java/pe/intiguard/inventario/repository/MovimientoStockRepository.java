@@ -7,5 +7,8 @@ import java.util.List;
 
 public interface MovimientoStockRepository extends JpaRepository<MovimientoStock, Long> {
 
-    List<MovimientoStock> findByIdProductoOrderByFechaDesc(Long idProducto);
+    /** Del más reciente al más antiguo. */
+    List<MovimientoStock> findByIdProductoOrderByCreadoEnDescIdDesc(Long idProducto);
+
+    List<MovimientoStock> findAllByOrderByCreadoEnDescIdDesc();
 }

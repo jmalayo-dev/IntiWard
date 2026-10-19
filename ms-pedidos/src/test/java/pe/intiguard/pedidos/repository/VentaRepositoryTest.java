@@ -18,13 +18,28 @@ class VentaRepositoryTest {
 
     @Test
     void guardaLaVentaConSusDetallesEnCascada() {
-        Venta venta = Venta.builder().idUsuario(1L).total(new BigDecimal("399.80")).build();
-        venta.getDetalles().add(DetalleVenta.builder().venta(venta).idProducto(7L).nombreProducto("Cámara IP")
-                .cantidad(2).precioUnitario(new BigDecimal("199.90")).subtotal(new BigDecimal("399.80")).build());
+        Venta venta = Venta.builder().idUsuario(1L).build();
+        DetalleVenta detalle = DetalleVenta.builder().venta(venta).idProducto(7L).nombreProducto("Cámara IP")
+                .cantidad(2).precioUnitario(new BigDecimal("199.90")).build();
+        venta.getDetalles().add(detalle);
+        venta.asignarMontos(detalle.getImporte());
         ventaRepository.save(venta);
 
-        assertThat(ventaRepository.findByIdUsuarioOrderByFechaDesc(1L))
+        assertThat(ventaRepository.findByIdUsuarioOrderByFechaVentaDesc(1L))
                 .singleElement()
-                .satisfies(v -> assertThat(v.getDetalles()).hasSize(1));
+                .satisfies(v -> {
+                    assertThat(v.getDetalles()).hasSize(1);
+                    assertThat(v.getFechaVenta()).isNotNull();
+                });
+    }
+
+    @Test
+    void desglosaElIgvDelTotal() {
+        Venta venta = Venta.builder().idUsuario(1L).build();
+        venta.asignarMontos(new BigDecimal("399.80"));
+
+        assertThat(venta.getSubtotal()).isEqualByComparingTo("338.81");
+        assertThat(venta.getIgv()).isEqualByComparingTo("60.99");
+        assertThat(venta.getSubtotal().add(venta.getIgv())).isEqualByComparingTo(venta.getTotal());
     }
 }

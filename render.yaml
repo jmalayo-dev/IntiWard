@@ -1,0 +1,196 @@
+# Blueprint de Render: crea los 6 servicios del backend de una vez (Dashboard → New → Blueprint).
+# Guía paso a paso: docs/DESPLIEGUE_RENDER.md
+#
+# Plan gratuito: cada servicio tiene URL pública y se duerme tras 15 min sin tráfico (despierta en ~1 min).
+# No hay Eureka: los servicios gratuitos no reciben tráfico de la red privada de Render, así que se llaman
+# por su URL pública (MS_*_URL). Las rutas internas (reservar stock, emitir comprobante) exigen CLAVE_INTERNA.
+#
+# IMPORTANTE: la región no se puede cambiar después. Elige la más cercana a la base de Aiven.
+
+envVarGroups:
+  - name: intiguard-comun
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: cloud
+      - key: EUREKA_ENABLED
+        value: "false"
+      # Una sola clave para firmar y validar el token en los 6 servicios
+      - key: JWT_SECRET
+        generateValue: true
+      # La manda ms-pedidos; la exigen las rutas internas de ms-inventario y ms-comprobantes
+      - key: CLAVE_INTERNA
+        generateValue: true
+      # URL pública de cada servicio. Si Render le asigna otra a alguno, corrígela aquí
+      - key: MS_AUTH_URL
+        value: https://intiguard-auth.onrender.com
+      - key: MS_CATALOGO_URL
+        value: https://intiguard-catalogo.onrender.com
+      - key: MS_INVENTARIO_URL
+        value: https://intiguard-inventario.onrender.com
+      - key: MS_PEDIDOS_URL
+        value: https://intiguard-pedidos.onrender.com
+      - key: MS_COMPROBANTES_URL
+        value: https://intiguard-comprobantes.onrender.com
+      # Dominio de la web publicada (CORS del gateway). Varios, separados por coma
+      - key: CORS_ORIGENES
+        value: https://intiguard-web.onrender.com,http://localhost:5173
+      # Un servicio dormido tarda ~1 min en despertar: las llamadas entre servicios esperan hasta 70 s
+      - key: FEIGN_CONNECT_TIMEOUT_MS
+        value: "10000"
+      - key: FEIGN_READ_TIMEOUT_MS
+        value: "70000"
+      # Plan gratuito: 512 MB por servicio
+      - key: JAVA_OPTS
+        value: -Xms64m -Xmx256m -XX:MaxMetaspaceSize=160m -Xss512k -XX:+UseSerialGC -XX:TieredStopAtLevel=1
+
+services:
+  - type: web
+    name: intiguard-gateway
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./ms-gateway/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths: [ms-gateway/**, pom.xml]
+    envVars:
+      - key: PORT
+        value: "8080"
+      - fromGroup: intiguard-comun
+
+  - type: web
+    name: intiguard-auth
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./ms-auth/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths: [ms-auth/**, common-security/**, pom.xml]
+    envVars:
+      - key: PORT
+        value: "8081"
+      - fromGroup: intiguard-comun
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        value: db_auth
+      - key: DB_USER
+        value: ms_auth
+      - key: DB_PASSWORD
+        sync: false
+      # Administrador inicial: se crea al arrancar si ese correo no existe
+      - key: ADMIN_CORREO
+        sync: false
+      - key: ADMIN_CLAVE
+        sync: false
+
+  - type: web
+    name: intiguard-catalogo
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./ms-catalogo/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths: [ms-catalogo/**, common-security/**, pom.xml]
+    envVars:
+      - key: PORT
+        value: "8082"
+      - fromGroup: intiguard-comun
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        value: db_catalogo
+      - key: DB_USER
+        value: ms_catalogo
+      - key: DB_PASSWORD
+        sync: false
+
+  - type: web
+    name: intiguard-inventario
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./ms-inventario/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths: [ms-inventario/**, common-security/**, pom.xml]
+    envVars:
+      - key: PORT
+        value: "8083"
+      - fromGroup: intiguard-comun
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        value: db_inventario
+      - key: DB_USER
+        value: ms_inventario
+      - key: DB_PASSWORD
+        sync: false
+
+  - type: web
+    name: intiguard-pedidos
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./ms-pedidos/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths: [ms-pedidos/**, common-security/**, pom.xml]
+    envVars:
+      - key: PORT
+        value: "8084"
+      - fromGroup: intiguard-comun
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        value: db_pedidos
+      - key: DB_USER
+        value: ms_pedidos
+      - key: DB_PASSWORD
+        sync: false
+
+  - type: web
+    name: intiguard-comprobantes
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./ms-comprobantes/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths: [ms-comprobantes/**, common-security/**, pom.xml]
+    envVars:
+      - key: PORT
+        value: "8085"
+      - fromGroup: intiguard-comun
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        value: db_comprobantes
+      - key: DB_USER
+        value: ms_comprobantes
+      - key: DB_PASSWORD
+        sync: false

@@ -1,28 +1,61 @@
-# Configuración por defecto (perfil local). Todo valor sensible entra por variable de entorno;
-# los valores después de ":" son solo para desarrollo contra el MySQL de docker-compose (puerto 3307).
+# Perfil por defecto (desarrollo) contra el MySQL de Aiven. Las credenciales salen de .env:
+# Docker las pasa como variables de entorno y, al correr desde el IDE o con Maven, se lee el .env de la raíz.
 server:
   port: ${PORT:8083}
 
 spring:
   application:
     name: ms-inventario
+  config:
+    import: optional:file:.env[.properties],optional:file:../.env[.properties]
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:db_inventario}
-    username: ${DB_USER:usr_inventario}
-    password: ${DB_PASSWORD:usr_inventario_local}
+    url: jdbc:mysql://${DB_HOST:${AIVEN_HOST}}:${DB_PORT:${AIVEN_PORT}}/${DB_NAME:db_inventario}?sslMode=REQUIRED
+    username: ${DB_USER:ms_inventario}
+    password: ${DB_PASSWORD:${DB_PASS_INVENTARIO}}
+    hikari:
+      # Aiven acepta 46 conexiones en total y la base es compartida por todo el equipo
+      maximum-pool-size: ${DB_POOL_MAX:2}
+      minimum-idle: ${DB_POOL_MIN:1}
   jpa:
     hibernate:
-      # El schema lo crea infra/mysql/*.sql; Hibernate solo valida que coincida
+      # El schema lo crea infra/scripts/init-aiven.sh; Hibernate solo valida que coincida
       ddl-auto: validate
     open-in-view: false
+  cloud:
+    openfeign:
+      client:
+        config:
+          ms-catalogo:
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:2000}
 
 intiguard:
   jwt:
     secret: ${JWT_SECRET:clave-local-solo-para-desarrollo-no-usar-en-nube}
     expiration-minutes: 60
+  security:
+    # false mientras no exista el login (C3): el token se usa si llega, pero no es obligatorio
+    exigir-token: ${EXIGIR_TOKEN:false}
+    rutas-publicas:
+      - GET /stock
+      - GET /stock/*
+    # Render: clave compartida para las rutas internas (cabecera X-Clave-Interna). Vacía en local
+    clave-interna: ${CLAVE_INTERNA:}
+    rutas-internas:
+      - POST /stock/reservar
+      - POST /stock/confirmar
+      - POST /stock/liberar
+  # URL fija de cada servicio que se llama por Feign. Vacía = se busca en Eureka (modo local)
+  servicios:
+    catalogo: ${MS_CATALOGO_URL:}
+  # Minutos que dura una reserva antes de que la tarea de vencimiento la libere (CU09)
+  reserva:
+    minutos: 15
 
 eureka:
   client:
+    # false en Render: los servicios se llaman por URL fija (intiguard.servicios.*), no por Eureka
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:

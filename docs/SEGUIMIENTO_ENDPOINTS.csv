@@ -1,0 +1,42 @@
+﻿integrante;rama;vistas;endpoint;tiene_bloqueo;ms-afectados;cumplido;fecha_cumplimiento
+Galarza;b-galarza;4.4 Iniciar sesión;POST /auth/login;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.5 Crear cuenta;POST /auth/registro;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.7 Checkout, 4.8 Compra confirmada, 4.13 Mi perfil, Encabezado de la tienda, Barra lateral del panel;GET /usuarios/me;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.13 Mi perfil;PUT /usuarios/me;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.1 Resumen, 5.7 Ventas, 5.10 Usuarios;GET /usuarios;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;Detalle de venta del panel;GET /usuarios/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.10 Usuarios;POST /usuarios;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.10 Usuarios;PUT /usuarios/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.10 Usuarios;DELETE /usuarios/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.7 Checkout, 4.8 Compra confirmada, 4.9 Compra no completada;POST /comprobantes (interno);BLOQUEANTE;ms-pedidos;SI;2026-10-18
+Galarza;b-galarza;4.10 Mis pedidos, 5.1 Resumen, 5.7 Ventas, 5.8 Comprobantes;GET /comprobantes;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.12 Comprobante imprimible;GET /comprobantes/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.8 Compra confirmada, 4.11 Detalle de mi pedido, Detalle de venta del panel;GET /comprobantes/venta/{idVenta};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.8 Compra confirmada, 4.11 Detalle de mi pedido, 4.12 Comprobante imprimible, Detalle de venta del panel, 5.8 Comprobantes;GET /comprobantes/{id}/pdf;DEPENDIENTE;ms-pedidos;SI;2026-10-18
+Galarza;b-galarza;5.9 Reportes;GET /comprobantes/reporte;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;4.1 Inicio, 4.2 Catálogo, 4.3 Detalle de producto, Buscador del encabezado, 5.1 Resumen, 5.2 Productos, 5.5 Stock, 5.6 Movimientos, 5.9 Reportes, Barra lateral del panel (campana de agotados);GET /productos;DEPENDIENTE;ms-inventario;SI;2026-10-18
+César;b-cesar;4.3 Detalle de producto, 4.9 Compra no completada, 4.10 Mis pedidos, 4.11 Detalle de mi pedido, Detalle de venta del panel, 5.3 Crear / editar producto;GET /productos/{id};BLOQUEANTE;ms-pedidos, ms-inventario;SI;2026-10-18
+César;b-cesar;5.3 Crear / editar producto;POST /productos;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;5.2 Productos, 5.3 Crear / editar producto;PUT /productos/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;5.2 Productos;DELETE /productos/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;4.2 Catálogo, Buscador del encabezado, 5.2 Productos, 5.3 Crear / editar producto, 5.4 Marcas y categorías;GET /marcas;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;4.2 Catálogo, Buscador del encabezado, 5.2 Productos, 5.3 Crear / editar producto, 5.4 Marcas y categorías;GET /categorias;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;5.4 Marcas y categorías;POST /marcas;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;5.4 Marcas y categorías;POST /categorias;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;5.4 Marcas y categorías;PUT /marcas/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+César;b-cesar;5.4 Marcas y categorías;PUT /categorias/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Arévalo;b-arevalo;4.3 Detalle de producto;GET /stock/{idProducto};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Arévalo;b-arevalo;4.1 Inicio, 4.2 Catálogo, 4.3 Detalle de producto, 4.6 Carrito, 4.7 Checkout, 5.1 Resumen, 5.2 Productos, 5.5 Stock, Barra lateral del panel (campana de agotados);GET /stock?ids=;BLOQUEANTE;ms-catalogo;SI;2026-10-18
+Arévalo;b-arevalo;5.5 Stock;POST /stock/entrada;DEPENDIENTE;ms-catalogo;SI;2026-10-18
+Arévalo;b-arevalo;5.5 Stock;PUT /stock/{idProducto};DEPENDIENTE;ms-catalogo;SI;2026-10-18
+Arévalo;b-arevalo;5.6 Movimientos;GET /movimientos;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Arévalo;b-arevalo;4.7 Checkout, 4.8 Compra confirmada, 4.9 Compra no completada;POST /stock/reservar (interno);BLOQUEANTE;ms-pedidos;SI;2026-10-18
+Arévalo;b-arevalo;4.7 Checkout, 4.8 Compra confirmada, 4.9 Compra no completada;POST /stock/confirmar (interno);BLOQUEANTE;ms-pedidos;SI;2026-10-18
+Arévalo;b-arevalo;4.7 Checkout, 4.8 Compra confirmada, 4.9 Compra no completada;POST /stock/liberar (interno);BLOQUEANTE;ms-pedidos;SI;2026-10-18
+Evelyn;b-guerrero;4.6 Carrito, 4.7 Checkout, Encabezado de la tienda;GET /carrito;DEPENDIENTE;ms-catalogo;SI;2026-10-18
+Evelyn;b-guerrero;4.1 Inicio, 4.2 Catálogo, 4.3 Detalle de producto;POST /carrito/items;DEPENDIENTE;ms-catalogo;SI;2026-10-18
+Evelyn;b-guerrero;4.6 Carrito;PUT /carrito/items/{idProducto};DEPENDIENTE;ms-catalogo;SI;2026-10-18
+Evelyn;b-guerrero;4.6 Carrito;DELETE /carrito/items/{idProducto};DEPENDIENTE;ms-catalogo;SI;2026-10-18
+Evelyn;b-guerrero;4.7 Checkout, 4.8 Compra confirmada, 4.9 Compra no completada;POST /pedidos/checkout;DEPENDIENTE;ms-catalogo, ms-inventario, ms-comprobantes;SI;2026-10-18
+Evelyn;b-guerrero;4.10 Mis pedidos, 5.1 Resumen, 5.7 Ventas, 5.9 Reportes;GET /pedidos;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Evelyn;b-guerrero;4.8 Compra confirmada, 4.11 Detalle de mi pedido, 4.12 Comprobante imprimible, Detalle de venta del panel, 5.8 Comprobantes;GET /pedidos/{id};BLOQUEANTE;ms-comprobantes;SI;2026-10-18

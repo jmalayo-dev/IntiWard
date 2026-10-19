@@ -5,7 +5,7 @@ import pe.intiguard.auth.entity.Rol;
 
 import java.util.Optional;
 
-public interface RolRepository extends JpaRepository<Rol, Integer> {
+public interface RolRepository extends JpaRepository<Rol, Long> {
 
     Optional<Rol> findByNombre(String nombre);
 }
