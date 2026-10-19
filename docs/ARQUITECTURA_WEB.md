@@ -4,7 +4,7 @@ Este documento define **cómo se construye la base del cliente web**: tecnologí
 
 No trata el diseño visual (eso es [`PROTOTIPO_WEB.md`](PROTOTIPO_WEB.md)) ni las reglas del negocio (eso es la sección "Guía de negocio y casos de uso" del [`README` del backend](../../DSW_II_PROYECTO/README.md#guía-de-negocio-y-casos-de-uso)). Aquí solo está **la arquitectura**.
 
-> **Dónde vive:** el cliente web es su propio proyecto, `DSW_II_PROYECTO_WEB/` (la raíz es la app de Vite, no una carpeta `web/` dentro del backend). Este documento y `PROTOTIPO_WEB.md` viven en su carpeta `docs/` y describen lo que está construido. **Estado (17/10/2026):** las 24 vistas están hechas y funcionan contra los mocks; falta conectar el backend real (paso 8 de la sección 11).
+> **Dónde vive:** el cliente web es su propio proyecto, `DSW_II_PROYECTO_WEB/` (la raíz es la app de Vite, no una carpeta `web/` dentro del backend). Este documento y `PROTOTIPO_WEB.md` viven en su carpeta `docs/` y describen lo que está construido. **Estado (18/10/2026):** las 24 vistas están hechas y conectadas al backend real; los mocks quedan para trabajar sin backend.
 
 ---
 
@@ -374,16 +374,17 @@ Vite solo expone las variables que empiezan con `VITE_`. Ninguna es secreta: tod
 ```properties
 # URL base del backend vista desde el navegador (el proxy la manda al gateway)
 VITE_API_URL=/api
-# Servicios que responden con mocks. Se van quitando a medida que cada servicio esté listo.
-VITE_MOCKS=auth,catalogo,inventario,pedidos,comprobantes
+# Servicios que responden con mocks. Vacío = todo contra el backend real (gateway en localhost:8080).
+# Para trabajar sin backend: VITE_MOCKS=auth,catalogo,inventario,pedidos,comprobantes en .env.development.local
+VITE_MOCKS=
 # true: el checkout simulado responde 503 (para probar la vista 4.9)
 VITE_MOCK_FALLA_COMPROBANTE=false
 ```
 
-`.env.development.local` (personal, no se sube): para probar contra el backend real sin tocar el archivo común.
+`.env.development.local` (personal, no se sube): para trabajar sin backend, con los servicios simulados.
 
 ```properties
-VITE_MOCKS=
+VITE_MOCKS=auth,catalogo,inventario,pedidos,comprobantes
 ```
 
 ### `src/shared/config/env.js`
@@ -1227,6 +1228,6 @@ Cada error llega como `ApiError` con `status`, `mensaje` y `detalles`. Quién lo
 | 5 | `widgets/tienda-layout` + `app/router` + páginas 4.1 a 4.5 | Se navega la tienda y se inicia sesión como Ana o como admin | ✅ |
 | 6 | Mocks de `pedidos` y `comprobantes` + `entities/carrito`, `venta`, `comprobante` + features de carrito y compra + páginas 4.6 a 4.14 | Compra completa con boleta; con `VITE_MOCK_FALLA_COMPROBANTE=true`, la vista 4.9 | ✅ |
 | 7 | `widgets/admin-layout` + páginas 5.1 a 5.10 | El admin gestiona productos, stock, ventas y usuarios en el mock | ✅ |
-| 8 | Conectar el backend real, un servicio a la vez: quitarlo de `VITE_MOCKS` en `.env.development.local` y levantar gateway + Eureka + ese servicio | La misma pantalla funciona igual contra Aiven | ⬜ |
+| 8 | Conectar el backend real, un servicio a la vez: quitarlo de `VITE_MOCKS` en `.env.development.local` y levantar gateway + Eureka + ese servicio | La misma pantalla funciona igual contra Aiven | ✅ |
 
 Para el paso 8, el backend se levanta como dice [`ARRANQUE_PROYECTO.md`](../../DSW_II_PROYECTO/ARRANQUE_PROYECTO.md). Con `EXIGIR_TOKEN=false` (desarrollo) el gateway deja pasar peticiones sin token: para probar los 401 y 403 reales hay que levantarlo con `EXIGIR_TOKEN=true`.
