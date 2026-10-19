@@ -114,6 +114,14 @@ class CatalogoIntegracionTest {
     }
 
     @Test
+    void unaMarcaInactivaOcultaSusProductosDeLaTienda() throws Exception {
+        dahua.setActivo(false);
+        marcaRepository.save(dahua);
+        mvc.perform(get("/productos")).andExpect(jsonPath("$.page.totalElements").value(2));
+        enviar(get("/productos?inactivos=true"), admin(), null).andExpect(jsonPath("$.page.totalElements").value(4));
+    }
+
+    @Test
     void conStockPreguntaAInventario() throws Exception {
         when(inventarioClient.listarStock()).thenReturn(List.of(new StockDto(camaraIp.getId(), 5), new StockDto(99L, 0)));
         mvc.perform(get("/productos?conStock=true"))
