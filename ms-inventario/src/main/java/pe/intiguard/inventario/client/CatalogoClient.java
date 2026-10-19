@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 /** ms-catalogo por Eureka (contrato C5): 404 si el producto no existe. GET /productos/{id} es público. */
-@FeignClient(name = "ms-catalogo")
+@FeignClient(name = "ms-catalogo", url = "${intiguard.servicios.catalogo:}")
 public interface CatalogoClient {
 
     @GetMapping("/productos/{id}")

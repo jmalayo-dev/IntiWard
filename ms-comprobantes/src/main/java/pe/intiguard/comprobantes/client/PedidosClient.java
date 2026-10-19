@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * ms-pedidos por Eureka. GET /pedidos/{id} exige ser el dueño o ADMIN:
  * ReenvioTokenConfig reenvía el token de quien pidió el PDF.
  */
-@FeignClient(name = "ms-pedidos")
+@FeignClient(name = "ms-pedidos", url = "${intiguard.servicios.pedidos:}")
 public interface PedidosClient {
 
     @GetMapping("/pedidos/{id}")

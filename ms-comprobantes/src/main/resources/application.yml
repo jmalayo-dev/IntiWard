@@ -27,8 +27,8 @@ spring:
         config:
           # El PDF pide los productos a ms-pedidos: sin respuesta en 3 s, sale sin la tabla
           ms-pedidos:
-            connect-timeout: 2000
-            read-timeout: 3000
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:3000}
 
 intiguard:
   jwt:
@@ -38,9 +38,18 @@ intiguard:
     # false mientras no exista el login (C3): el token se usa si llega, pero no es obligatorio
     exigir-token: ${EXIGIR_TOKEN:false}
     rutas-publicas: []   # todo exige token
+    # Render: clave compartida para las rutas internas (cabecera X-Clave-Interna). Vacía en local
+    clave-interna: ${CLAVE_INTERNA:}
+    rutas-internas:
+      - POST /comprobantes
+  # URL fija de cada servicio que se llama por Feign. Vacía = se busca en Eureka (modo local)
+  servicios:
+    pedidos: ${MS_PEDIDOS_URL:}
 
 eureka:
   client:
+    # false en Render: los servicios se llaman por URL fija (intiguard.servicios.*), no por Eureka
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:

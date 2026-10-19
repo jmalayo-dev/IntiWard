@@ -27,8 +27,8 @@ spring:
         config:
           # Filtro conStock: si inventario no responde en 2 s, se responde 503
           ms-inventario:
-            connect-timeout: 2000
-            read-timeout: 2000
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${FEIGN_READ_TIMEOUT_MS:2000}
 
 intiguard:
   jwt:
@@ -41,9 +41,16 @@ intiguard:
       - GET /productos/**
       - GET /marcas/**
       - GET /categorias/**
+    # Render: clave compartida para las rutas internas (cabecera X-Clave-Interna). Vacía en local
+    clave-interna: ${CLAVE_INTERNA:}
+  # URL fija de cada servicio que se llama por Feign. Vacía = se busca en Eureka (modo local)
+  servicios:
+    inventario: ${MS_INVENTARIO_URL:}
 
 eureka:
   client:
+    # false en Render: los servicios se llaman por URL fija (intiguard.servicios.*), no por Eureka
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
   instance:
