@@ -76,7 +76,7 @@ Por eso:
 | Entity nueva | `ProductoEspecificacion` (`@OneToMany` con `orphanRemoval`, `@BatchSize`) | ✅ |
 | DTO / Mapper | `ProductoResponse` (con `activo`, `idMarca`, `idCategoria`, `especificaciones`), `NombreActivoResponse`, `ProductoMapper` | ✅ |
 | Service | `ProductoService` (filtros con `Specification`, `conStock` vía `InventarioClient`, CRUD), `MarcaCategoriaService` (contador de activos, nombre único) | ✅ |
-| Controller | `ProductoController` (página `VIA_DTO`, `sort` precio/nombre, `size` hasta 100), `MarcaCategoriaController` | ✅ con `CatalogoIntegracionTest` (7, HTTP + H2) |
+| Controller | `ProductoController` (página `VIA_DTO`, `sort` precio/nombre, `size` hasta 1000), `MarcaCategoriaController` | ✅ con `CatalogoIntegracionTest` (7, HTTP + H2) |
 | Errores | `GlobalExceptionHandler` + `ApiError` | ✅ |
 
 ## Endpoints objetivo
@@ -171,7 +171,7 @@ Formato `VIA_DTO` de Spring Data: se activa con `@EnableSpringDataWebSupport(pag
 | Parámetro | Tipo | Regla |
 |---|---|---|
 | `page` | `Integer` | Página desde 0. Por defecto 0 |
-| `size` | `Integer` | Por defecto 12. La web pide hasta **100** para tablas y gráficos del panel |
+| `size` | `Integer` | Por defecto 12, máximo **1000**. El panel pide todo el catálogo de una vez para sus tablas, gráficos y la exportación |
 | `categoria` | `String` | Nombre **o** id de la categoría |
 | `marca` | `String` · **nuevo** | Una o varias marcas separadas por coma (nombre o id): `marca=Hikvision,Dahua` |
 | `q` | `String` | Texto contenido en el nombre, sin distinguir mayúsculas ni tildes (con `LIKE`, la collation `utf8mb4_0900_ai_ci` de la base ya las ignora) |
