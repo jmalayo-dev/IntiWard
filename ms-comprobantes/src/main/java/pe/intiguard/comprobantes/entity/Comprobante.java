@@ -3,7 +3,6 @@ package pe.intiguard.comprobantes.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Generated;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,8 +43,10 @@ public class Comprobante {
     @Column(nullable = false)
     private int correlativo;
 
-    /** B001-00000001: lo calcula MySQL (columna GENERATED) a partir de serie y correlativo. */
-    @Generated
+    /**
+     * B001-00000001: lo calcula MySQL (columna GENERATED) a partir de serie y correlativo. No se relee tras
+     * insertar (un viaje menos a la base); ComprobanteMapper.numero lo arma si todavía no se leyó.
+     */
     @Column(length = 13, insertable = false, updatable = false)
     private String numero;
 
