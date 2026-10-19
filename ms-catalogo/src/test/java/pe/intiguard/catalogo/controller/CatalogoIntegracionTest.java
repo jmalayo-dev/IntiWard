@@ -111,6 +111,7 @@ class CatalogoIntegracionTest {
         mvc.perform(get("/productos?sort=precio,desc"))
                 .andExpect(jsonPath("$.content[*].precio", contains(349.9, 289.0, 159.9)));
         mvc.perform(get("/productos?sort=campoInexistente")).andExpect(status().isOk());
+        mvc.perform(get("/productos?size=5000")).andExpect(jsonPath("$.page.size").value(1000));
     }
 
     @Test

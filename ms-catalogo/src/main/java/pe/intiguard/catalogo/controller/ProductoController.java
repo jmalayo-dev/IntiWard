@@ -25,7 +25,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ProductoController {
 
-    private static final int TAMANO_MAXIMO = 100;
+    /** El panel pide todo el catálogo de una vez (tablas, gráficos, exportación): hoy son ~200 productos. */
+    private static final int TAMANO_MAXIMO = 1000;
 
     private final ProductoService productoService;
     private final UsuarioActual usuarioActual;
