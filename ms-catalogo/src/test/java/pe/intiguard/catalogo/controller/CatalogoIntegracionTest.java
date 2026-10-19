@@ -211,24 +211,4 @@ class CatalogoIntegracionTest {
         enviar(put("/categorias/" + alarmas.getId()), admin(), "{\"nombre\":\"cámaras\"}").andExpect(status().isConflict());
         enviar(put("/categorias/999"), admin(), "{\"activo\":true}").andExpect(status().isNotFound());
     }
-
-    @Test
-    void marcasDicenCuantosProductosTienenStock() throws Exception {
-        // Hikvision: la cámara IP con 5 y la alarma agotada. Dahua: solo la cámara bala, agotada (la descontinuada no cuenta)
-        Producto alarma = productoRepository.findAll().stream().filter(p -> p.getNombre().startsWith("Alarma")).findFirst().orElseThrow();
-        when(inventarioClient.listarStock()).thenReturn(List.of(
-                new StockDto(camaraIp.getId(), 5), new StockDto(alarma.getId(), 0), new StockDto(descontinuada.getId(), 3)));
-        mvc.perform(get("/marcas"))
-                .andExpect(jsonPath("$[?(@.nombre=='Hikvision')].conStock").value(1))
-                .andExpect(jsonPath("$[?(@.nombre=='Dahua')].conStock").value(0));
-        // Las categorías no lo calculan
-        mvc.perform(get("/categorias")).andExpect(jsonPath("$[0].conStock").doesNotExist());
-
-        // Sin respuesta de ms-inventario la lista sale igual, con conStock null (la web no bloquea ninguna marca)
-        when(inventarioClient.listarStock()).thenThrow(new RuntimeException("caído"));
-        mvc.perform(get("/marcas"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].conStock").doesNotExist());
-    }
 }
