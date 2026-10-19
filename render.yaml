@@ -33,7 +33,7 @@ envVarGroups:
         value: https://intiguard-comprobantes.onrender.com
       # Dominio de la web publicada (CORS del gateway). Varios, separados por coma
       - key: CORS_ORIGENES
-        value: https://intiguard-web.onrender.com,http://localhost:5173
+        value: https://intiward-web.onrender.com,http://localhost:5173
       # Un servicio dormido tarda ~1 min en despertar: las llamadas entre servicios esperan hasta 70 s
       - key: FEIGN_CONNECT_TIMEOUT_MS
         value: "10000"

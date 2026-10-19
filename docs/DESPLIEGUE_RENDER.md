@@ -12,7 +12,7 @@ Cómo publicar el backend (6 servicios) y la web en Render, sin costo. La base d
 | `intiguard-inventario` | Web Service (Docker) | ms-inventario | `https://intiguard-inventario.onrender.com` |
 | `intiguard-pedidos` | Web Service (Docker) | ms-pedidos | `https://intiguard-pedidos.onrender.com` |
 | `intiguard-comprobantes` | Web Service (Docker) | ms-comprobantes | `https://intiguard-comprobantes.onrender.com` |
-| `intiguard-web` | Static Site | La app React (repo `DSW_II_PROYECTO_WEB`) | `https://intiguard-web.onrender.com` |
+| `intiward-web` | Static Site | La app React (repo `DSW_II_PROYECTO_WEB`) | `https://intiward-web.onrender.com` |
 
 **Por qué así:**
 
@@ -76,7 +76,7 @@ No hay que tocarlas, salvo que algo cambie. Están en el grupo **`intiguard-comu
 | `JWT_SECRET` | generada por Render | Firma y valida el token; **la misma en los 6** |
 | `CLAVE_INTERNA` | generada por Render | Cabecera `X-Clave-Interna` de las rutas internas |
 | `MS_AUTH_URL` … `MS_COMPROBANTES_URL` | `https://intiguard-*.onrender.com` | A dónde enruta el gateway y a dónde llama cada cliente Feign |
-| `CORS_ORIGENES` | `https://intiguard-web.onrender.com,http://localhost:5173` | Dominios que pueden llamar al gateway desde el navegador |
+| `CORS_ORIGENES` | `https://intiward-web.onrender.com,http://localhost:5173` | Dominios que pueden llamar al gateway desde el navegador |
 | `FEIGN_CONNECT_TIMEOUT_MS` · `FEIGN_READ_TIMEOUT_MS` | `10000` · `70000` | Un servicio dormido tarda ~1 min en despertar: las llamadas entre servicios lo esperan |
 | `JAVA_OPTS` | `-Xmx256m … -Duser.timezone=America/Lima` | Memoria de la JVM para caber en 512 MB, y hora de Lima (Render corre en UTC) |
 
@@ -109,7 +109,7 @@ Si un servicio no arranca, revisa sus **Logs** en Render. Los errores típicos:
 ## Paso 6 · La web
 
 1. En el repositorio `DSW_II_PROYECTO_WEB`, mergea a `main` (ya trae `render.yaml` y `.env.production`).
-2. Render: **New → Blueprint** → ese repositorio. Crea el Static Site `intiguard-web`.
+2. Render: **New → Blueprint** → ese repositorio. Crea el Static Site `intiward-web`.
 3. La web llama a `https://intiguard-gateway.onrender.com` (definido en `.env.production`). Si la URL del gateway o de la
    web es otra, corrige `.env.production` en la web y `CORS_ORIGENES` en el backend.
 
