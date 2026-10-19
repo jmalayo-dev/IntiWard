@@ -44,6 +44,8 @@ public class CheckoutService {
 
     private static final Pattern DNI = Pattern.compile("^[0-9]{8}$");
     private static final Pattern RUC = Pattern.compile("^(10|15|17|20)[0-9]{9}$");
+    private static final int VERIFICACIONES = 4;
+    private static final long PAUSA_VERIFICACION_MS = 750;
     private static final Pattern ID_PRODUCTO = Pattern.compile("idProducto:\\s*(\\d+)");
 
     private final CarritoService carritoService;
@@ -79,6 +81,11 @@ public class CheckoutService {
                     log.warn("Venta {}: no se pudo emitir el comprobante ({}). Se compensa", idVenta, error.toString());
                     return false;
                 });
+        // El corte no significa que falló: la emisión pudo terminar justo después. Antes de compensar, se pregunta
+        if (!emitido && seEmitioIgual(token, idVenta)) {
+            log.info("Venta {}: el comprobante se emitió después del corte; la venta sigue", idVenta);
+            emitido = true;
+        }
         if (!emitido) {
             liberarSinFallar(token, idVenta);
             ventaRegistro.cambiarEstado(idVenta, EstadoVenta.ANULADA);
@@ -158,6 +165,28 @@ public class CheckoutService {
             // Sin cuerpo legible: se responde sin el id
         }
         return null;
+    }
+
+    /** Hasta 4 consultas, una cada 750 ms. Si ms-comprobantes está caído, responde error al instante y se compensa. */
+    private boolean seEmitioIgual(String token, Long idVenta) {
+        for (int intento = 1; intento <= VERIFICACIONES; intento++) {
+            try {
+                if (comprobantesClient.buscarPorVenta(token, idVenta) != null) return true;
+            } catch (FeignException.NotFound ex) {
+                // Todavía no existe: puede estar terminando de guardarse
+            } catch (RuntimeException ex) {
+                return false;
+            }
+            if (intento < VERIFICACIONES) {
+                try {
+                    Thread.sleep(PAUSA_VERIFICACION_MS);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 
     private void liberarSinFallar(String token, Long idVenta) {

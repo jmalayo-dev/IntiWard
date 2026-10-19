@@ -22,6 +22,10 @@ spring:
       ddl-auto: validate
     open-in-view: false
   cloud:
+    # Crea al arrancar el balanceador de cada servicio: el primer checkout no paga ese costo
+    loadbalancer:
+      eager-load:
+        clients: ms-catalogo,ms-inventario,ms-comprobantes
     openfeign:
       client:
         config:
@@ -49,6 +53,21 @@ intiguard:
     timeout-comprobante-ms: 2000
     # CU09: una venta PENDIENTE por más tiempo que esto se anula (la reserva ya venció)
     minutos-pendiente: 15
+
+# Paso 5 del checkout. El starter trae resilience4j-spring-boot3: la configuración sale de aquí
+resilience4j:
+  timelimiter:
+    instances:
+      comprobantes:
+        timeout-duration: ${intiguard.checkout.timeout-comprobante-ms}ms
+  circuitbreaker:
+    instances:
+      comprobantes:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
 
 eureka:
   client:
