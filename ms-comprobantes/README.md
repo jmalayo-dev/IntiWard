@@ -68,18 +68,18 @@ La BD lo hace cumplir (`ck_comprobante_doc` y la FK compuesta serie+tipo), pero 
 | Service | `listar`, `obtener`, `formatearNumero(serie, correlativo)` | ✅ con test unitario |
 | Controller | `GET /comprobantes`, `GET /comprobantes/{id}` | ✅ verificado por el gateway |
 | Semilla | Series B001 y F001 en 0 | ✅ |
-| Emisión y PDF | | ⬜ |
+| Emisión, dueño, reporte y PDF | `POST /comprobantes` (idempotente, serie con bloqueo), control de dueño por `id_usuario`, `GET /comprobantes/reporte`, PDF con OpenPDF (productos vía `PedidosClient` reenviando el token) | ✅ con `ComprobanteIntegracionTest` (6) y `NumeroALetrasTest` |
 
 ## Endpoints objetivo
 
 | Método | Ruta | Quién | Estado | Bloqueo |
 |---|---|---|---|---|
-| POST | `/comprobantes` | Interno (ms-pedidos) | ⬜ | ⛔ bloquea el checkout de ms-pedidos |
-| GET | `/comprobantes` | ADMIN: todos · CLIENTE: los suyos | 🟡 lista todos | 🟢 |
-| GET | `/comprobantes/{id}` | Dueño o ADMIN | 🟡 sin control de dueño | 🟢 |
-| GET | `/comprobantes/venta/{idVenta}` | Dueño o ADMIN | ⬜ | 🟢 |
-| GET | `/comprobantes/{id}/pdf` | Dueño o ADMIN | ⬜ | 🔗 ms-pedidos (productos del documento) |
-| GET | `/comprobantes/reporte?desde=&hasta=` | ADMIN | ⬜ | 🟢 |
+| POST | `/comprobantes` | Interno (ms-pedidos) | ✅ | ⛔ bloquea el checkout de ms-pedidos |
+| GET | `/comprobantes` | ADMIN: todos · CLIENTE: los suyos | ✅ | 🟢 |
+| GET | `/comprobantes/{id}` | Dueño o ADMIN | ✅ | 🟢 |
+| GET | `/comprobantes/venta/{idVenta}` | Dueño o ADMIN | ✅ | 🟢 |
+| GET | `/comprobantes/{id}/pdf` | Dueño o ADMIN | ✅ | 🔗 ms-pedidos (productos del documento) |
+| GET | `/comprobantes/reporte?desde=&hasta=` | ADMIN | ✅ | 🟢 |
 
 El detalle de cada uno está en "Contrato con el cliente web".
 
@@ -129,7 +129,7 @@ Cuando termines un endpoint, márcalo en [`docs/SEGUIMIENTO_ENDPOINTS.csv`](../d
 
 Solo el PDF necesita a ms-pedidos, porque los productos del documento están en la venta.
 
-### `POST /comprobantes` · Interno (ms-pedidos) · ⬜ · ⛔ bloquea ms-pedidos
+### `POST /comprobantes` · Interno (ms-pedidos) · ✅ · ⛔ bloquea ms-pedidos
 
 **Para qué:** emitir la boleta o factura en el paso 5 del checkout. La web **nunca** la llama (el gateway responde 403 desde afuera), pero sin ella no hay compra.
 **Vistas (indirectas):** 4.7 Checkout · 4.8 Compra confirmada · 4.9 Compra no completada.
@@ -145,29 +145,28 @@ Solo el PDF necesita a ms-pedidos, porque los productos del documento están en 
 
 Responde **201** `Comprobante` · **200** con el mismo comprobante si esa `idVenta` ya tenía uno (idempotencia) · **400** si el DNI o el RUC no son válidos. Debe responder en **menos de 2 s** (circuit breaker de ms-pedidos). El detalle está en el contrato C7, más abajo.
 
-### `GET /comprobantes` · Con sesión · 🟡 lista todos · 🟢
+### `GET /comprobantes` · Con sesión · ✅ · 🟢
 
 **Para qué:** el cliente ve el número de comprobante de cada pedido; el administrador los lista y filtra.
 **Vistas:** 4.10 Mis pedidos (número en cada pedido) · 5.1 Resumen · 5.7 Ventas · 5.8 Comprobantes.
 
 Responde **200**: `List<Comprobante>`, **del más nuevo al más antiguo** (`emitidoEn` descendente). Un CLIENTE recibe solo los de sus ventas; el ADMIN, todos.
-Falta: el orden y el filtro por dueño.
 
-### `GET /comprobantes/{id}` · Dueño o ADMIN · 🟡 sin control de dueño · 🟢
+### `GET /comprobantes/{id}` · Dueño o ADMIN · ✅ · 🟢
 
 **Para qué:** mostrar el comprobante en su vista imprimible.
 **Vistas:** 4.12 Comprobante imprimible.
 
 Responde **200**: `Comprobante`. **403** si es de otro cliente. **404**.
 
-### `GET /comprobantes/venta/{idVenta}` · Dueño o ADMIN · ⬜ · 🟢
+### `GET /comprobantes/venta/{idVenta}` · Dueño o ADMIN · ✅ · 🟢
 
 **Para qué:** encontrar el comprobante de un pedido (una venta tiene uno solo).
 **Vistas:** 4.8 Compra confirmada · 4.11 Detalle de mi pedido · detalle de venta del panel.
 
 Responde **200**: `Comprobante`. **403**. **404** si la venta no tiene comprobante (por ejemplo, una venta ANULADA).
 
-### `GET /comprobantes/{id}/pdf` · Dueño o ADMIN · ⬜ · 🔗 ms-pedidos
+### `GET /comprobantes/{id}/pdf` · Dueño o ADMIN · ✅ · 🔗 ms-pedidos
 
 **Para qué:** descargar el comprobante en PDF.
 **Vistas:** botón "Descargar PDF" en 4.8, 4.11, 4.12, el detalle de venta del panel y 5.8.
@@ -180,7 +179,7 @@ Responde **200** con el archivo:
 
 Contenido: el mismo de la vista 4.12 (cabecera, datos del cliente, tabla de productos, totales con el importe en letras y pie). **Los productos no están en este servicio:** se piden a ms-pedidos con `GET /pedidos/{idVenta}` (campo `detalles`), por Feign y reenviando el token. Para eso: copiar la dependencia `spring-cloud-starter-openfeign` del `pom.xml` de ms-pedidos al tuyo, `@EnableFeignClients`, un `PedidosClient` y un `RequestInterceptor` que reenvíe el header `Authorization`. **Mientras no esté:** arma el PDF con Mockito simulando `PedidosClient`.
 
-### `GET /comprobantes/reporte` · ADMIN · ⬜ · 🟢
+### `GET /comprobantes/reporte` · ADMIN · ✅ · 🟢
 
 **Para qué:** el reporte de ventas de un período.
 **Vistas:** 5.9 Reportes.

@@ -65,7 +65,7 @@ Cada clave errada suma 1 a `intentos_fallidos`. Al llegar a 5, se fija `bloquead
 | Config | `PasswordConfig`: `BCryptPasswordEncoder(10)`; `AdminInicializador` + `AdminProperties` | ✅ |
 | Errores | `GlobalExceptionHandler` + `ApiError` (400, 401, 403, 404, **423**, 500); `CredencialesInvalidasException`, `CuentaBloqueadaException` | ✅ |
 | Tests | `AuthServiceTest` (7, Mockito: una prueba por regla) y `LoginIntegracionTest` (5, HTTP + H2: el contador de intentos se guarda, el token sirve, `/usuarios` solo ADMIN) | ✅ |
-| Registro, CRUD de usuarios | | ⬜ |
+| Registro, perfil y CRUD de usuarios | `POST /auth/registro`, `GET`/`PUT /usuarios/me`, `POST`/`PUT`/`DELETE /usuarios` (borrado lógico); `ultimoAcceso` y `bloqueadoHasta` en la respuesta | ✅ con `UsuarioIntegracionTest` (6, HTTP + H2) |
 
 > El login (C3) lo hizo Mathias en la semana 2, a pedido del equipo. Verificado contra Aiven por el gateway: 200 con token, 401 genérico, 400 con detalle, 423 al quinto intento y con la clave correcta mientras dura el bloqueo, y el contador guardado en la base.
 
@@ -76,14 +76,14 @@ Cada clave errada suma 1 a `intentos_fallidos`. Al llegar a 5, se fija `bloquead
 | Método | Ruta | Quién | Estado | Bloqueo |
 |---|---|---|---|---|
 | POST | `/auth/login` | Público | ✅ | 🟢 |
-| POST | `/auth/registro` | Público | ⬜ | 🟢 |
-| GET | `/usuarios/me` | Con sesión | ⬜ nuevo | 🟢 |
-| PUT | `/usuarios/me` | Con sesión | ⬜ nuevo | 🟢 |
-| GET | `/usuarios` | ADMIN | 🟡 faltan `bloqueadoHasta` y `ultimoAcceso` | 🟢 |
-| GET | `/usuarios/{id}` | ADMIN o el mismo usuario | 🟡 faltan `bloqueadoHasta` y `ultimoAcceso` | 🟢 |
-| POST | `/usuarios` | ADMIN | ⬜ | 🟢 |
-| PUT | `/usuarios/{id}` | ADMIN | ⬜ | 🟢 |
-| DELETE | `/usuarios/{id}` | ADMIN (borrado lógico: `activo = false`) | ⬜ | 🟢 |
+| POST | `/auth/registro` | Público | ✅ | 🟢 |
+| GET | `/usuarios/me` | Con sesión | ✅ | 🟢 |
+| PUT | `/usuarios/me` | Con sesión | ✅ | 🟢 |
+| GET | `/usuarios` | ADMIN | ✅ | 🟢 |
+| GET | `/usuarios/{id}` | ADMIN o el mismo usuario | ✅ | 🟢 |
+| POST | `/usuarios` | ADMIN | ✅ | 🟢 |
+| PUT | `/usuarios/{id}` | ADMIN | ✅ | 🟢 |
+| DELETE | `/usuarios/{id}` | ADMIN (borrado lógico: `activo = false`) | ✅ | 🟢 |
 
 El detalle de cada uno está en "Contrato con el cliente web".
 
@@ -147,9 +147,8 @@ Responde **200** (`LoginResponse`):
 
 Errores: **400** formato inválido · **401** `"Credenciales inválidas"` (el mismo texto si el correo no existe, si la clave está mal o si la cuenta está inactiva) · **423** al 5.º intento fallido (bloqueo de 15 min).
 
-Pendiente: guardar `ultimoAcceso` (la hora actual) en cada login correcto, en la misma transacción que reinicia el contador.
 
-### `POST /auth/registro` · Público · ⬜ · 🟢
+### `POST /auth/registro` · Público · ✅ · 🟢
 
 **Para qué:** que un visitante cree su cuenta de cliente para poder comprar.
 **Vistas:** 4.5 Crear cuenta.
@@ -168,7 +167,7 @@ Errores: **400** con `detalles` por campo · **409** `"El correo ya está regist
 
 Ya es ruta pública en el gateway y en ms-auth.
 
-### `GET /usuarios/me` · Con sesión · ⬜ nuevo · 🟢
+### `GET /usuarios/me` · Con sesión · ✅ · 🟢
 
 **Para qué:** que la web conozca el nombre, la foto y los datos de quien inició sesión. El token solo trae correo, rol e id.
 **Vistas:** 4.7 Checkout (prellena el nombre) · 4.8 Compra confirmada · 4.13 Mi perfil · encabezado de la tienda (avatar y nombre, en todas las páginas con sesión) · barra lateral del panel (tarjeta de la cuenta, en todas las páginas `/admin`).
@@ -177,7 +176,7 @@ Responde **200**: el `Usuario` del token (`usuarioActual.id()`). **401** sin tok
 
 Nota técnica: declara `@GetMapping("/me")` en `UsuarioController`. Spring prioriza la ruta literal sobre `/{id}`, así que no choca.
 
-### `PUT /usuarios/me` · Con sesión · ⬜ nuevo · 🟢
+### `PUT /usuarios/me` · Con sesión · ✅ · 🟢
 
 **Para qué:** que el usuario edite sus datos personales, su foto y su contraseña.
 **Vistas:** 4.13 Mi perfil.
@@ -195,22 +194,21 @@ Responde **200**: el `Usuario` actualizado. **400** con `detalles`. **401**.
 
 Nota técnica: para distinguir "no vino `fotoUrl`" de "vino `fotoUrl: null`", recibe el cuerpo como `Map<String, Object>` y usa `containsKey`.
 
-### `GET /usuarios` · ADMIN · 🟡 · 🟢
+### `GET /usuarios` · ADMIN · ✅ · 🟢
 
 **Para qué:** la tabla de usuarios del panel, y poner el nombre del cliente al lado de cada venta.
 **Vistas:** 5.1 Resumen (clientes nuevos) · 5.7 Ventas (nombre del cliente) · 5.10 Usuarios.
 
 Responde **200**: `List<Usuario>` con **todos, incluidos los inactivos**. **403** si no es ADMIN.
-Falta: `bloqueadoHasta` y `ultimoAcceso` en la respuesta.
 
-### `GET /usuarios/{id}` · ADMIN o el mismo usuario · 🟡 · 🟢
+### `GET /usuarios/{id}` · ADMIN o el mismo usuario · ✅ · 🟢
 
 **Para qué:** los datos del cliente en el detalle de una venta del panel.
 **Vistas:** detalle de venta del panel (`/admin/ventas/:id`).
 
 Responde **200**: `Usuario`. **403** si es otro usuario y quien pide no es ADMIN. **404**.
 
-### `POST /usuarios` · ADMIN · ⬜ · 🟢
+### `POST /usuarios` · ADMIN · ✅ · 🟢
 
 **Para qué:** que el administrador cree cuentas: otro administrador o un cliente.
 **Vistas:** 5.10 Usuarios (ventana "Nuevo usuario").
@@ -218,7 +216,7 @@ Responde **200**: `Usuario`. **403** si es otro usuario y quien pide no es ADMIN
 Envía lo mismo que el registro, más `rol` (`String`: `ADMIN` o `CLIENTE`; cualquier otro valor se toma como `CLIENTE`).
 Responde **201**: `Usuario`. **400** con `detalles`. **409** si el correo ya existe.
 
-### `PUT /usuarios/{id}` · ADMIN · ⬜ · 🟢
+### `PUT /usuarios/{id}` · ADMIN · ✅ · 🟢
 
 **Para qué:** editar los datos de una cuenta, cambiar su rol o reactivarla.
 **Vistas:** 5.10 Usuarios (editar y reactivar).
@@ -229,7 +227,7 @@ Envía cualquiera de estos campos: `nombres`, `apellidos`, `correo`, `telefono`,
 
 Responde **200**: `Usuario`. **400**. **404**. **409** si el nuevo correo ya existe.
 
-### `DELETE /usuarios/{id}` · ADMIN · ⬜ · 🟢
+### `DELETE /usuarios/{id}` · ADMIN · ✅ · 🟢
 
 **Para qué:** desactivar una cuenta sin borrarla (puede tener ventas).
 **Vistas:** 5.10 Usuarios (desactivar).

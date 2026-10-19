@@ -21,6 +21,14 @@ spring:
       # El schema lo crea infra/scripts/init-aiven.sh; Hibernate solo valida que coincida
       ddl-auto: validate
     open-in-view: false
+  cloud:
+    openfeign:
+      client:
+        config:
+          # El PDF pide los productos a ms-pedidos: sin respuesta en 3 s, sale sin la tabla
+          ms-pedidos:
+            connect-timeout: 2000
+            read-timeout: 3000
 
 intiguard:
   jwt:

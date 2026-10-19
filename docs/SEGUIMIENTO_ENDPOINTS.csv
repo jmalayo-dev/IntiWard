@@ -1,19 +1,19 @@
 ﻿integrante;rama;vistas;endpoint;tiene_bloqueo;ms-afectados;cumplido;fecha_cumplimiento
-Galarza;b-galarza;4.4 Iniciar sesión;POST /auth/login;NO_DEPENDIENTE;ninguno;SI;2026-10-15
-Galarza;b-galarza;4.5 Crear cuenta;POST /auth/registro;NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;4.7 Checkout, 4.8 Compra confirmada, 4.13 Mi perfil, Encabezado de la tienda, Barra lateral del panel;GET /usuarios/me;NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;4.13 Mi perfil;PUT /usuarios/me;NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;5.1 Resumen, 5.7 Ventas, 5.10 Usuarios;GET /usuarios;NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;Detalle de venta del panel;GET /usuarios/{id};NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;5.10 Usuarios;POST /usuarios;NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;5.10 Usuarios;PUT /usuarios/{id};NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;5.10 Usuarios;DELETE /usuarios/{id};NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;4.7 Checkout, 4.8 Compra confirmada, 4.9 Compra no completada;POST /comprobantes (interno);BLOQUEANTE;ms-pedidos;NO;
-Galarza;b-galarza;4.10 Mis pedidos, 5.1 Resumen, 5.7 Ventas, 5.8 Comprobantes;GET /comprobantes;NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;4.12 Comprobante imprimible;GET /comprobantes/{id};NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;4.8 Compra confirmada, 4.11 Detalle de mi pedido, Detalle de venta del panel;GET /comprobantes/venta/{idVenta};NO_DEPENDIENTE;ninguno;NO;
-Galarza;b-galarza;4.8 Compra confirmada, 4.11 Detalle de mi pedido, 4.12 Comprobante imprimible, Detalle de venta del panel, 5.8 Comprobantes;GET /comprobantes/{id}/pdf;DEPENDIENTE;ms-pedidos;NO;
-Galarza;b-galarza;5.9 Reportes;GET /comprobantes/reporte;NO_DEPENDIENTE;ninguno;NO;
+Galarza;b-galarza;4.4 Iniciar sesión;POST /auth/login;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.5 Crear cuenta;POST /auth/registro;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.7 Checkout, 4.8 Compra confirmada, 4.13 Mi perfil, Encabezado de la tienda, Barra lateral del panel;GET /usuarios/me;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.13 Mi perfil;PUT /usuarios/me;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.1 Resumen, 5.7 Ventas, 5.10 Usuarios;GET /usuarios;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;Detalle de venta del panel;GET /usuarios/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.10 Usuarios;POST /usuarios;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.10 Usuarios;PUT /usuarios/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;5.10 Usuarios;DELETE /usuarios/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.7 Checkout, 4.8 Compra confirmada, 4.9 Compra no completada;POST /comprobantes (interno);BLOQUEANTE;ms-pedidos;SI;2026-10-18
+Galarza;b-galarza;4.10 Mis pedidos, 5.1 Resumen, 5.7 Ventas, 5.8 Comprobantes;GET /comprobantes;NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.12 Comprobante imprimible;GET /comprobantes/{id};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.8 Compra confirmada, 4.11 Detalle de mi pedido, Detalle de venta del panel;GET /comprobantes/venta/{idVenta};NO_DEPENDIENTE;ninguno;SI;2026-10-18
+Galarza;b-galarza;4.8 Compra confirmada, 4.11 Detalle de mi pedido, 4.12 Comprobante imprimible, Detalle de venta del panel, 5.8 Comprobantes;GET /comprobantes/{id}/pdf;DEPENDIENTE;ms-pedidos;SI;2026-10-18
+Galarza;b-galarza;5.9 Reportes;GET /comprobantes/reporte;NO_DEPENDIENTE;ninguno;SI;2026-10-18
 César;b-cesar;4.1 Inicio, 4.2 Catálogo, 4.3 Detalle de producto, Buscador del encabezado, 5.1 Resumen, 5.2 Productos, 5.5 Stock, 5.6 Movimientos, 5.9 Reportes, Barra lateral del panel (campana de agotados);GET /productos;DEPENDIENTE;ms-inventario;NO;
 César;b-cesar;4.3 Detalle de producto, 4.9 Compra no completada, 4.10 Mis pedidos, 4.11 Detalle de mi pedido, Detalle de venta del panel, 5.3 Crear / editar producto;GET /productos/{id};BLOQUEANTE;ms-pedidos, ms-inventario;NO;
 César;b-cesar;5.3 Crear / editar producto;POST /productos;NO_DEPENDIENTE;ninguno;NO;
