@@ -11,6 +11,7 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -27,6 +28,7 @@ import java.util.List;
 /**
  * Contrato C4: seguridad en la puerta de entrada. En este orden:
  * <ol>
+ *   <li>Preflight CORS (OPTIONS): pasa siempre; el navegador no manda el token en el preflight.</li>
  *   <li>Ruta interna (reservar, confirmar y liberar stock, emitir comprobante): 403 siempre.</li>
  *   <li>Ruta pública: pasa sin mirar el token.</li>
  *   <li>Token presente: se valida firma y expiración; si falla, 401.</li>
@@ -55,6 +57,9 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        if (HttpMethod.OPTIONS.equals(request.getMethod())) {
+            return chain.filter(exchange);
+        }
         if (coincide(reglas.rutasInternas(), request)) {
             log.warn("Ruta interna bloqueada: {} {}", request.getMethod(), request.getURI().getPath());
             return responder(exchange, HttpStatus.FORBIDDEN, "Ruta de uso interno entre servicios");

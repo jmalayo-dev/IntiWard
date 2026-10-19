@@ -185,11 +185,11 @@ test(auth): pruebas del bloqueo por intentos fallidos
 | C2 | `JwtAuthFilter` y `UsuarioActual` en `common-security` | Autenticación | Todos | 3 | ✅ |
 | C3 | `POST /auth/login` | Autenticación | Gateway, cliente web | 3 | ✅ |
 | C4 | Gateway: rutas públicas, 401 sin token, rutas internas bloqueadas | Gateway | Todos | 3 | ✅ |
-| C5 | `GET /productos/{id}` con el campo `activo` | Catálogo | Pedidos, inventario | 2 | ⬜ |
-| C6 | Reservar, confirmar y liberar stock | Inventario | Pedidos | fin de 3 | ⬜ |
-| C7 | Emitir comprobante y buscarlo por venta | Comprobantes | Pedidos, cliente web | fin de 3 / 4 | ⬜ |
-| C8 | Venta PENDIENTE antes de reservar, token reenviado, liberar ante fallo | Pedidos | Inventario, comprobantes | 4 | ⬜ |
-| C9 | Lista de 200 productos para cargar en la base | Catálogo | Mathias | 5 | ⬜ |
+| C5 | `GET /productos/{id}` con el campo `activo` | Catálogo | Pedidos, inventario | 2 | ✅ |
+| C6 | Reservar, confirmar y liberar stock | Inventario | Pedidos | fin de 3 | ✅ |
+| C7 | Emitir comprobante y buscarlo por venta | Comprobantes | Pedidos, cliente web | fin de 3 / 4 | ✅ |
+| C8 | Venta PENDIENTE antes de reservar, token reenviado, liberar ante fallo | Pedidos | Inventario, comprobantes | 4 | ✅ |
+| C9 | Lista de 200 productos para cargar en la base | Catálogo | Mathias | 5 | ✅ |
 
 El detalle de cada contrato (cuerpos, respuestas y códigos HTTP) está en la sección "Dependencias con otros servicios" del README del servicio que lo entrega.
 
@@ -319,24 +319,24 @@ Al iniciar sesión el usuario recibe una **sesión de 1 hora** que lleva su iden
 
 | # | Caso de uso | Actor | Estado |
 |---|---|---|---|
-| CU01 | Explorar el catálogo | Visitante, Cliente | 🟡 |
+| CU01 | Explorar el catálogo | Visitante, Cliente | ✅ |
 | CU02 | Ver el detalle de un producto | Visitante, Cliente | ✅ |
-| CU03 | Registrarse | Visitante | ⬜ |
+| CU03 | Registrarse | Visitante | ✅ |
 | CU04 | Iniciar sesión | Visitante | ✅ |
-| CU05 | Ver y editar mi perfil | Cliente | ⬜ |
-| CU06 | Gestionar mi carrito | Cliente | ⬜ |
-| CU07 | Comprar (checkout) | Cliente | ⬜ |
-| CU08 | Ver mis pedidos y mis comprobantes | Cliente | 🟡 |
-| CU09 | Liberar compras abandonadas | Sistema | ⬜ |
-| CU10 | Gestionar productos | Administrador | ⬜ |
-| CU11 | Gestionar marcas y categorías | Administrador | ⬜ |
-| CU12 | Registrar entrada de mercadería | Administrador | ⬜ |
-| CU13 | Ajustar stock tras un conteo | Administrador | ⬜ |
-| CU14 | Consultar movimientos de stock | Administrador | ⬜ |
-| CU15 | Consultar ventas | Administrador | 🟡 |
+| CU05 | Ver y editar mi perfil | Cliente | ✅ |
+| CU06 | Gestionar mi carrito | Cliente | ✅ |
+| CU07 | Comprar (checkout) | Cliente | ✅ |
+| CU08 | Ver mis pedidos y mis comprobantes | Cliente | ✅ |
+| CU09 | Liberar compras abandonadas | Sistema | ✅ |
+| CU10 | Gestionar productos | Administrador | ✅ |
+| CU11 | Gestionar marcas y categorías | Administrador | ✅ |
+| CU12 | Registrar entrada de mercadería | Administrador | ✅ |
+| CU13 | Ajustar stock tras un conteo | Administrador | ✅ |
+| CU14 | Consultar movimientos de stock | Administrador | ✅ |
+| CU15 | Consultar ventas | Administrador | ✅ |
 | CU16 | Consultar comprobantes | Administrador | ✅ |
-| CU17 | Ver el reporte de ventas | Administrador | ⬜ |
-| CU18 | Gestionar usuarios | Administrador | 🟡 |
+| CU17 | Ver el reporte de ventas | Administrador | ✅ |
+| CU18 | Gestionar usuarios | Administrador | ✅ |
 
 #### CU01 · Explorar el catálogo
 
@@ -370,10 +370,10 @@ Al iniciar sesión el usuario recibe una **sesión de 1 hora** que lleva su iden
 
 #### CU05 · Ver y editar mi perfil
 
-- **Puede cambiar:** nombres, apellidos, teléfono, dirección y foto.
+- **Puede cambiar:** nombres, apellidos, teléfono, dirección, foto y contraseña.
 - **No puede cambiar:** su correo ni su rol.
 - **Regla:** cada usuario ve y edita **solo su propio** perfil.
-- **Endpoint:** por definir con Autenticación (hoy la edición de usuarios es solo del Administrador).
+- **Endpoint:** `GET` y `PUT /usuarios/me`.
 
 #### CU06 · Gestionar mi carrito
 
@@ -421,7 +421,6 @@ El caso de uso más importante. El cliente confirma su carrito y elige el compro
 - **Mis pedidos:** lista de sus compras, de la más reciente a la más antigua, con fecha, estado, tipo de comprobante y total. El detalle muestra cada producto con el nombre y precio **que tenía al comprar** (aunque el catálogo haya cambiado después) y el desglose subtotal + IGV = total.
 - **Mis comprobantes:** número, tipo, fecha y montos de cada uno. Se puede **descargar el PDF**. Desde un pedido se llega a su comprobante.
 - **Regla:** el cliente ve **solo lo suyo**. Si intenta abrir un pedido o comprobante ajeno, se le niega el acceso.
-- **Estado:** hoy las consultas existen pero aún no filtran por dueño. El PDF está pendiente.
 
 #### CU09 · Liberar compras abandonadas (automático)
 
@@ -441,7 +440,7 @@ El caso de uso más importante. El cliente confirma su carrito y elige el compro
 
 - **Acciones:** listar, crear, renombrar y desactivar.
 - **Reglas:** el nombre es único. Nunca se borran, se desactivan. Una marca o categoría inactiva deja de aparecer en la tienda junto con sus productos.
-- **Endpoint:** la lectura está definida; la creación y edición están por definir con Catálogo.
+- **Endpoint:** `GET`, `POST` y `PUT` de `/marcas` y `/categorias`.
 
 #### CU12 · Registrar entrada de mercadería
 
@@ -481,7 +480,6 @@ El caso de uso más importante. El cliente confirma su carrito y elige el compro
 | CONFIRMADA | Venta firme, con comprobante |
 | ANULADA | Intento fallido (sin stock, comprobante caído o compra abandonada). Se conserva como registro, no se borra |
 
-- **Estado:** hoy se listan todas, sin filtros.
 
 #### CU16 · Consultar comprobantes
 
@@ -504,7 +502,6 @@ El caso de uso más importante. El cliente confirma su carrito y elige el compro
   1. Un usuario **nunca se borra**: tiene ventas asociadas. Al desactivarlo ya no puede iniciar sesión.
   2. Solo un Administrador puede crear a otro Administrador.
   3. El correo es único.
-- **Estado:** listar y ver el detalle ya funcionan. Crear, editar y desactivar están pendientes.
 
 ### Qué puede hacer cada actor
 

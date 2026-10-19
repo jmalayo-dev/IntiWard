@@ -90,6 +90,7 @@ services:
       ms-discovery: { condition: service_healthy }
     environment:
       <<: *java-env
+      CORS_ORIGENES: ${CORS_ORIGENES:-http://localhost:5173,http://localhost:4173}
 
   web-client:
     <<: *java
