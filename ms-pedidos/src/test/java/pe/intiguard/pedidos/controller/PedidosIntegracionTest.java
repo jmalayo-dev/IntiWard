@@ -186,6 +186,21 @@ class PedidosIntegracionTest {
     }
 
     @Test
+    void siElComprobanteSeEmitioDespuesDelCorteLaVentaSigue() throws Exception {
+        llenarCarrito(ANA);
+        when(comprobantesClient.emitir(anyString(), any())).thenAnswer(i -> {
+            Thread.sleep(1000);
+            return new ComprobantesClient.Comprobante(1L, 1L, "B001-00000001");
+        });
+        when(comprobantesClient.buscarPorVenta(anyString(), any())).thenReturn(new ComprobantesClient.Comprobante(1L, 1L, "B001-00000001"));
+        checkout(ANA, BOLETA)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estado").value("CONFIRMADA"));
+        verify(inventarioClient, never()).liberar(anyString(), any());
+        verify(inventarioClient).confirmar(anyString(), any());
+    }
+
+    @Test
     void validacionesDelCheckout() throws Exception {
         checkout(ANA, BOLETA).andExpect(status().isBadRequest()).andExpect(jsonPath("$.mensaje").value("El carrito está vacío"));
         llenarCarrito(ANA);
